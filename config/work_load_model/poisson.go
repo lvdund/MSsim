@@ -1,38 +1,36 @@
 package work_load_model
 
-/*
-#cgo CFLAGS: -I /usr/local/include
-#cgo LDFLAGS: -L /usr/local/lib -lgsl -lgslcblas -lm
-#include<gsl/gsl_rng.h>
-#include<gsl/gsl_randist.h>
+import (
+	"fmt"
+	"math"
+)
 
-unsigned int randomNumberFromPoisson( double mu, long seed) {
-    const gsl_rng_type* T;
-    gsl_rng* r;
-    unsigned int dist;
-
-	gsl_rng_env_setup();
-	T = gsl_rng_default;
-	r = gsl_rng_alloc(T);
-
-    gsl_rng_set(r,seed);
-    dist = gsl_ran_poisson (r, mu);
-
-	gsl_rng_free (r);
-
-	return dist;
+type PoissonGenerator struct {
+	rand *RandGenerator
 }
-// */
-// import "C"
 
-// // calculate some random numbers from the Poisson distribution
-// func PoissonDistribution(mean float64, length int, const_seed int) (distPoisson []uint) {
-// 	distPoisson = make([]uint, length)
+func NewPoissonGenerator(seed int64) *PoissonGenerator {
+	r := NewRandGenerator(seed)
+	return &PoissonGenerator{r}
+}
 
-// 	for i := 1; i <= length; i++ {
-// 		seed := const_seed + i
-// 		aux := C.randomNumberFromPoisson(C.double(mean), C.long(seed))
-// 		distPoisson[i-1] = uint(aux)
-// 	}
-// 	return
-// }
+// Poisson returns a random number of possion distribution
+func (prng PoissonGenerator) Poisson(lambda float64) int64 {
+	if !(lambda > 0.0) {
+		panic(fmt.Sprintf("Invalid lambda: %.2f", lambda))
+	}
+	return prng.poisson(lambda)
+}
+
+func (prng PoissonGenerator) poisson(lambda float64) int64 {
+	// algorithm given by Knuth
+	L := math.Pow(math.E, -lambda)
+	var k int64 = 0
+	var p float64 = 1.0
+
+	for p > L {
+		k++
+		p *= prng.rand.Float64()
+	}
+	return (k - 1)
+}
