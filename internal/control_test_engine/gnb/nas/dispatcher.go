@@ -5,7 +5,8 @@ import (
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas/handler"
 )
 
-func Dispatch(ue *context.GNBUe, message []byte, gnb *context.GNBContext) {
+/*
+func dispatch(ue *context.GNBUe, message []byte, gnb *context.GNBContext) {
 
 	switch ue.GetState() {
 
@@ -22,3 +23,4 @@ func Dispatch(ue *context.GNBUe, message []byte, gnb *context.GNBContext) {
 		handler.HandlerUeReady(ue, message, gnb)
 	}
 }
+*/

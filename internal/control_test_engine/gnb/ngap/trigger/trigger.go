@@ -2,12 +2,10 @@ package trigger
 
 import (
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	ueSender "github.com/lvdund/mssim/internal/control_test_engine/gnb/nas/message/sender"
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/interface_management"
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/pdu_session_management"
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_context_management"
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_mobility_management"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/sender"
 
 	"github.com/lvdund/ngap/ies"
 	log "github.com/sirupsen/logrus"
@@ -25,8 +23,7 @@ func SendPduSessionResourceSetupResponse(pduSessions []*context.GnbPDUSession, u
 	ue.SetStateReady()
 
 	// Send PDU Session Resource Setup Response.
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][AMF] Error sending PDU Session Resource Setup Response.: ", err)
 	}
@@ -44,8 +41,7 @@ func SendPduSessionReleaseResponse(pduSessionIds []ies.PDUSessionID, ue *context
 		log.Fatal("[GNB][NGAP] Error sending PDU Session Release Response.: ", err)
 	}
 
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][NGAP] Error sending PDU Session Release Response.: ", err)
 	}
@@ -61,8 +57,7 @@ func SendInitialContextSetupResponse(ue *context.GNBUe, gnb *context.GNBContext)
 	}
 
 	// Send Initial Context Setup Response.
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][AMF] Error sending Initial Context Setup Response: ", err)
 	}
@@ -78,8 +73,7 @@ func SendUeContextReleaseRequest(ue *context.GNBUe) {
 	}
 
 	// Send UE Context Release Complete
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][AMF] Error sending UE Context Release Request: ", err)
 	}
@@ -95,8 +89,7 @@ func SendUeContextReleaseComplete(ue *context.GNBUe) {
 	}
 
 	// Send UE Context Release Complete
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][AMF] Error sending UE Context Complete: ", err)
 	}
@@ -112,8 +105,7 @@ func SendAmfConfigurationUpdateAcknowledge(amf *context.GNBAmf) {
 	}
 
 	// Send AMF Configure Update Acknowledge
-	conn := amf.GetSCTPConn()
-	err = sender.SendToAmF(ngapMsg, conn)
+	amf.SendNgap(ngapMsg)
 	if err != nil {
 		log.Warn("[GNB][NGAP] Error sending AMF Configuration Update Acknowledge: ", err)
 	}
@@ -123,13 +115,12 @@ func SendNgSetupRequest(gnb *context.GNBContext, amf *context.GNBAmf) {
 	log.Info("[GNB] Initiating NG Setup Request")
 
 	// send NG setup response.
-	ngapMsg, err := interface_management.NGSetupRequest(gnb, "PacketRusher")
+	ngapMsg, err := interface_management.NGSetupRequest(gnb, "MSsim")
 	if err != nil {
 		log.Info("[GNB][NGAP] Error sending NG Setup Request: ", err)
 	}
 
-	conn := amf.GetSCTPConn()
-	err = sender.SendToAmF(ngapMsg, conn)
+	amf.SendNgap(ngapMsg)
 	if err != nil {
 		log.Info("[GNB][AMF] Error sending NG Setup Request: ", err)
 	}
@@ -144,9 +135,7 @@ func SendPathSwitchRequest(gnb *context.GNBContext, ue *context.GNBUe) {
 	if err != nil {
 		log.Info("[GNB][NGAP] Error sending Path Switch Request ", err)
 	}
-
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][NGAP] Error sending Path Switch Request: ", err)
 	}
@@ -161,8 +150,7 @@ func SendHandoverRequestAcknowledge(gnb *context.GNBContext, ue *context.GNBUe) 
 		log.Info("[GNB][NGAP] Error sending Handover Request Acknowledge: ", err)
 	}
 
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][NGAP] Error sending Handover Request Acknowledge: ", err)
 	}
@@ -177,8 +165,7 @@ func SendHandoverNotify(gnb *context.GNBContext, ue *context.GNBUe) {
 		log.Info("[GNB][NGAP] Error sending Handover Notify: ", err)
 	}
 
-	conn := ue.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = ue.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][NGAP] Error sending Handover Notify: ", err)
 	}
@@ -198,7 +185,7 @@ func TriggerXnHandover(oldGnb *context.GNBContext, newGnb *context.GNBContext, p
 
 	msg := context.UEMessage{GNBRx: newGnbRx, GNBTx: newGnbTx, GNBInboundChannel: newGnb.GetInboundChannel()}
 
-	ueSender.SendMessageToUe(gnbUeContext, msg)
+	gnbUeContext.ReceiveMessage(&msg)
 }
 
 func TriggerNgapHandover(oldGnb *context.GNBContext, newGnb *context.GNBContext, prUeId int64) {
@@ -217,8 +204,7 @@ func TriggerNgapHandover(oldGnb *context.GNBContext, newGnb *context.GNBContext,
 		log.Info("[GNB][NGAP] Error sending Handover Required ", err)
 	}
 
-	conn := gnbUeContext.GetSCTP()
-	err = sender.SendToAmF(ngapMsg, conn)
+	err = gnbUeContext.SendNgap(ngapMsg)
 	if err != nil {
 		log.Fatal("[GNB][NGAP] Error sending Handover Required: ", err)
 	}

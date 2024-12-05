@@ -7,8 +7,7 @@ package service
 
 import (
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas/message/sender"
+	//"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas"
 	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/trigger"
 
 	log "github.com/sirupsen/logrus"
@@ -50,7 +49,7 @@ func gnbListen(gnb *context.GNBContext) {
 
 			// We enable the new PDU Session handed over to us
 			msg := context.UEMessage{GNBPduSessions: ue.GetPduSessions(), GnbIp: gnb.GetN3GnbIp()}
-			sender.SendMessageToUe(ue, msg)
+			ue.ReceiveMessage(&msg)
 
 			ue.SetStateReady()
 
@@ -115,7 +114,8 @@ func processingConn(ue *context.GNBUe, gnb *context.GNBContext) {
 				gnb.DeleteGnBUe(ue)
 			}
 		} else if message.IsNas {
-			nas.Dispatch(ue, message.Nas, gnb)
+			ue.SendNas(message.Nas, gnb)
+			//nas.Dispatch(ue, message.Nas, gnb)
 		} else if message.Idle {
 			trigger.SendUeContextReleaseRequest(ue)
 		} else {

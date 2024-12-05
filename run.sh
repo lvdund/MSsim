@@ -7,4 +7,4 @@
 # sysctl -w net.core.somaxconn=10240
 # sysctl -w net.core.netdev_max_backlog=10000
 
-go build cmd/packetrusher.go ; sudo ./packetrusher multi-ue -n 1000 -tr 1 -nPdu 5
+go build cmd/mssim.go ; sudo ./mssim multi-ue -n 1000 -tr 1 -nPdu 5

@@ -293,8 +293,8 @@ func cause5GMMToString(cause5GMM uint8) string {
 	case nasMessage.Cause5GMMMessageNotCompatibleWithTheProtocolState:
 		return "Message not compatible with the protocol state"
 	case nasMessage.Cause5GMMProtocolErrorUnspecified:
-		return "Protocol error, unspecified. Please share the pcap with packetrusher@hpe.com."
+		return "Protocol error, unspecified. Please share the pcap with mssim@hpe.com."
 	default:
-		return "Protocol error, unspecified. Please share the pcap with packetrusher@hpe.com."
+		return "Protocol error, unspecified. Please share the pcap with mssim@hpe.com."
 	}
 }

@@ -2,8 +2,8 @@ package context
 
 import (
 	"fmt"
-
 	"github.com/ishidawataru/sctp"
+	"github.com/lvdund/mssim/lib/ngap/ngapSctp"
 	"github.com/lvdund/ngap/aper"
 )
 
@@ -296,4 +296,18 @@ func (amf *GNBAmf) GetBackupAMF() string {
 
 func (amf *GNBAmf) SetBackupAMF(backupAMF string) {
 	amf.backupAMF = backupAMF
+}
+
+func (amf *GNBAmf) SendNgap(pdu []byte) error {
+	// TODO included information for SCTP association.
+	info := &sctp.SndRcvInfo{
+		Stream: uint16(0),
+		PPID:   ngapSctp.NGAP_PPID,
+	}
+
+	_, err := amf.tnla.sctpConn.SCTPWrite(pdu, info)
+	if err != nil {
+		return fmt.Errorf("Error sending NGAP message ", err)
+	}
+	return nil
 }

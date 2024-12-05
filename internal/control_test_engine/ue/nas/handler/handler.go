@@ -468,7 +468,7 @@ func HandlerIdentityRequest(ue *context.UEContext, message *nas.Message) {
 	case 1:
 		log.Info("[UE][NAS] Requested SUCI 5GS type")
 	default:
-		log.Fatal("[UE][NAS] Only SUCI identity is supported for now inside PacketRusher")
+		log.Fatal("[UE][NAS] Only SUCI identity is supported for now inside MSsim")
 	}
 
 	trigger.InitIdentifyResponse(ue)

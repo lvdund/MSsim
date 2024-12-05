@@ -23,13 +23,12 @@ type GNBUe struct {
 	sctpConnection *sctp.SCTPConn // Sctp association in using by the UE.
 	gnbRx          chan UEMessage
 	gnbTx          chan UEMessage
-	pRueId         int64 // PacketRusher unique UE ID
+	pRueId         int64 // MSsim unique UE ID
 	tmsi           *nasType.GUTI5G
 	context        Context
 	lock           sync.Mutex
 	newGnb         *GNBContext
 }
-
 type Context struct {
 	mobilityInfo           mobility
 	maskedIMEISV           string

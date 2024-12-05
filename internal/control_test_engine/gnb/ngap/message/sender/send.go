@@ -8,7 +8,7 @@ import (
 	"github.com/ishidawataru/sctp"
 )
 
-func SendToAmF(message []byte, conn *sctp.SCTPConn) error {
+func sendToAmF(message []byte, conn *sctp.SCTPConn) error {
 
 	// TODO included information for SCTP association.
 	info := &sctp.SndRcvInfo{
