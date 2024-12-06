@@ -74,14 +74,6 @@ func main() {
 				Action: runMultiUesCmd,
 			},
 			{
-				Name:    "custom-scenario",
-				Aliases: []string{"c"},
-				Flags: []cli.Flag{
-					&cli.PathFlag{Name: "scenario", Usage: "Specify the scenario path in .wasm"},
-				},
-				Action: runCustomCmd,
-			},
-			{
 				Name: "amf-load-loop",
 				Usage: "\nTest AMF responses in interval\n" +
 					"Example for generating 20 requests to AMF per second in interval of 20 seconds: amf-load-loop -n 20 -t 20\n",
@@ -184,22 +176,7 @@ func runMultiUesCmd(c *cli.Context) error {
 
 	return nil
 }
-func runCustomCmd(c *cli.Context) error {
-	setConfig(*c)
 
-	var scenarioPath string
-
-	if c.IsSet("scenario") {
-		scenarioPath = c.Path("scenario")
-	} else {
-		log.Info(c.Command.Usage)
-		return nil
-	}
-
-	templates.TestWithCustomScenario(scenarioPath)
-
-	return nil
-}
 func runAmfLoadTestCmd(c *cli.Context) error {
 	var time int
 	var numRqs int
