@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/reogac/nas"
 	"mssim/config"
-	"mssim/internal/gnb/context"
+	gnbContext "mssim/internal/gnb/context"
 	"net"
 	"reflect"
 	"regexp"
@@ -51,9 +51,9 @@ type UEContext struct {
 	prUeId            int64
 	UeSecurity        SECURITY
 	StateMM           int
-	gnbInboundChannel chan context.UEMessage
-	gnbRx             chan context.UEMessage
-	gnbTx             chan context.UEMessage
+	gnbInboundChannel chan gnbContext.UEMessage
+	gnbRx             chan gnbContext.UEMessage
+	gnbTx             chan gnbContext.UEMessage
 	drx               *time.Ticker
 	PduSession        [16]*UEPDUSession
 	amfInfo           Amf
@@ -79,7 +79,7 @@ type Amf struct {
 
 type UEPDUSession struct {
 	Id            uint8
-	GnbPduSession *context.GnbPDUSession
+	GnbPduSession *gnbContext.GnbPDUSession
 	ueIP          string
 	ueGnbIP       net.IP
 	tun           netlink.Link
@@ -198,7 +198,7 @@ func (ue *UEContext) NewRanUeContext(msin string,
 	ueSecurityCapability *nasType.UESecurityCapability,
 	k, opc, op, amf, sqn, mcc, mnc, routingIndicator, dnn string,
 	sst int32, sd string, tunnelMode config.TunnelMode, scenarioChan chan ScenarioMessage,
-	gnbInboundChannel chan context.UEMessage, id int, logFile string) {
+	gnbInboundChannel chan gnbContext.UEMessage, id int, logFile string) {
 
 	// added SUPI.
 	ue.UeSecurity.Msin = msin
@@ -340,29 +340,29 @@ func (ue *UEContext) GetStateMM() int {
 	return ue.StateMM
 }
 
-func (ue *UEContext) SetGnbInboundChannel(gnbInboundChannel chan context.UEMessage) {
+func (ue *UEContext) SetGnbInboundChannel(gnbInboundChannel chan gnbContext.UEMessage) {
 	ue.gnbInboundChannel = gnbInboundChannel
 }
 
 /*
-	func (ue *UEContext) SetGnbRx(gnbRx chan context.UEMessage) {
+	func (ue *UEContext) SetGnbRx(gnbRx chan gnbContext.UEMessage) {
 		ue.gnbRx = gnbRx
 	}
 
-	func (ue *UEContext) SetGnbTx(gnbTx chan context.UEMessage) {
+	func (ue *UEContext) SetGnbTx(gnbTx chan gnbContext.UEMessage) {
 		ue.gnbTx = gnbTx
 	}
 */
-func (ue *UEContext) GetGnbInboundChannel() chan context.UEMessage {
+func (ue *UEContext) GetGnbInboundChannel() chan gnbContext.UEMessage {
 	return ue.gnbInboundChannel
 }
 
 /*
-	func (ue *UEContext) getGnbRx() chan context.UEMessage {
+	func (ue *UEContext) getGnbRx() chan gnbContext.UEMessage {
 		return ue.gnbRx
 	}
 
-	func (ue *UEContext) GetGnbTx() chan context.UEMessage {
+	func (ue *UEContext) GetGnbTx() chan gnbContext.UEMessage {
 		return ue.gnbTx
 	}
 */
@@ -398,8 +398,8 @@ func (ue *UEContext) GetPduSession(pduSessionid uint8) (*UEPDUSession, error) {
 	return ue.PduSession[pduSessionid-1], nil
 }
 
-func (ue *UEContext) GetPduSessions() [16]*context.GnbPDUSession {
-	var pduSessions [16]*context.GnbPDUSession
+func (ue *UEContext) GetPduSessions() [16]*gnbContext.GnbPDUSession {
+	var pduSessions [16]*gnbContext.GnbPDUSession
 
 	for i, pduSession := range ue.PduSession {
 		if pduSession != nil {
@@ -424,7 +424,7 @@ func (ue *UEContext) DeletePduSession(pduSessionid uint8) error {
 	return nil
 }
 
-func (pduSession *UEPDUSession) SetIp(ip [12]uint8) {
+func (pduSession *UEPDUSession) SetIp(ip []uint8) {
 	pduSession.ueIP = fmt.Sprintf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3])
 }
 

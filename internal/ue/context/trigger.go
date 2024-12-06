@@ -97,6 +97,104 @@ func (ue *UEContext) handleExternalTrigger(msg UeTesterMessage) bool {
 	return loop
 }
 
+func (ue *UEContext) sendN1Sm(n1Sm []byte) {
+	msg := &nas.UlNasTransport{
+		PayloadContainer:     nas.Bytes(n1Sm),
+		PayloadContainerType: nas.Uint8(nas.PayloadContainerTypeN1SMInfo),
+	}
+
+	if len(ue.Dnn) > 0 {
+		msg.Dnn = nas.NewDnn(ue.Dnn)
+	}
+
+	msg.SNssai.Set(uint8(ue.Snssai.Sst), ue.Snssai.Sd)
+
+	nasCtx := ue.getNasContext() //must be non nil
+	msg.SetSecurityHeader(nas.NasSecBoth)
+	if nasPdu, err := nas.EncodeMm(nasCtx, msg); err != nil {
+		log.Fatal("[UE][NAS] Error sending ul nas transport and pdu session establishment request: ", err)
+	} else {
+
+		// sending to GNB
+		ue.SendNas(nasPdu)
+	}
+
+}
+
+func (ue *UEContext) triggerInitPduSessionRequest() {
+	log.Info("[UE] Initiating New PDU Session")
+
+	pduSession, err := ue.CreatePDUSession()
+	if err != nil {
+		log.Fatal("[UE][NAS] ", err)
+		return
+	}
+	pduSession.Exp.CreatedTime = time.Now()
+	ue.triggerInitPduSessionRequestInner(pduSession)
+	pduSession.Exp.ActivatedTime = time.Now()
+}
+
+func (ue *UEContext) triggerInitPduSessionRequestInner(pduSession *UEPDUSession) {
+	n1Sm := new(nas.PduSessionEstablishmentRequest)
+	n1Sm.PduSessionType = new(nas.Uint8)
+	*n1Sm.PduSessionType = nas.Uint8(nas.PduSessionTypeIpv4)
+	n1Sm.IntegrityProtectionMaximumDataRate = nas.NewIntegrityProtectionMaximumDataRate(0xff, 0xff)
+	/*
+		//TODO: add Extended PCOs: refer to SMF (handle
+		//PduSessionEstablishmentRequest)
+				msg.ExtendedProtocolConfigurationOptions = nasType.NewExtendedProtocolConfigurationOptions(nasMessage.PDUSessionEstablishmentRequestExtendedProtocolConfigurationOptionsType)
+				protocolConfigurationOptions := nasConvert.NewProtocolConfigurationOptions()
+				protocolConfigurationOptions.AddIPAddressAllocationViaNASSignallingUL()
+				protocolConfigurationOptions.AddDNSServerIPv4AddressRequest()
+				protocolConfigurationOptions.AddDNSServerIPv6AddressRequest()
+				pcoContents := protocolConfigurationOptions.Marshal()
+				pcoContentsLength := len(pcoContents)
+				msg.ExtendedProtocolConfigurationOptions.SetLen(uint16(pcoContentsLength))
+				msg.ExtendedProtocolConfigurationOptions.SetExtendedProtocolConfigurationOptionsContents(pcoContents)
+	*/
+
+	n1Sm.SetPti(1)
+	n1Sm.SetSessionId(pduSession.Id)
+
+	n1SmPdu, _ := nas.EncodeSm(n1Sm)
+	ue.sendN1Sm(n1SmPdu)
+
+	// change the state of ue(SM).
+	pduSession.SetStateSM_PDU_SESSION_PENDING()
+}
+
+func (ue *UEContext) triggerInitPduSessionRelease(pduSession *UEPDUSession) {
+	log.Info("[UE] Initiating Release of PDU Session ", pduSession.Id)
+
+	if pduSession.GetStateSM() != SM5G_PDU_SESSION_ACTIVE {
+		log.Warn("[UE][NAS] Skipping releasing the PDU Session ID ", pduSession.Id, " as it's not active")
+		return
+	}
+	n1Sm := new(nas.PduSessionReleaseRequest)
+
+	n1Sm.SetPti(1)
+	n1Sm.SetSessionId(pduSession.Id)
+	n1SmPdu, _ := nas.EncodeSm(n1Sm)
+	ue.sendN1Sm(n1SmPdu)
+	// change the state of ue(SM).
+	pduSession.SetStateSM_PDU_SESSION_INACTIVE()
+}
+
+func (ue *UEContext) triggerInitPduSessionReleaseComplete(pduSession *UEPDUSession) {
+	log.Info("[UE] Initiating PDU Session Release Complete for PDU Session", pduSession.Id)
+
+	if pduSession.GetStateSM() != SM5G_PDU_SESSION_INACTIVE {
+		log.Warn("[UE][NAS] Unable to send PDU Session Release Complete for a PDU Session which is not inactive")
+		return
+	}
+	n1Sm := new(nas.PduSessionReleaseComplete)
+
+	n1Sm.SetPti(1) //must be same as received command message
+	n1Sm.SetSessionId(pduSession.Id)
+	n1SmPdu, _ := nas.EncodeSm(n1Sm)
+	ue.sendN1Sm(n1SmPdu)
+}
+
 func (ue *UEContext) triggerInitRegistration() {
 	log.Info("[UE] Initiating Registration")
 
@@ -117,89 +215,6 @@ func (ue *UEContext) triggerInitRegistration() {
 
 		// change the state of ue for deregistered
 		ue.SetStateMM_DEREGISTERED()
-	}
-}
-
-func (ue *UEContext) triggerInitPduSessionRequest() {
-	log.Info("[UE] Initiating New PDU Session")
-
-	pduSession, err := ue.CreatePDUSession()
-	if err != nil {
-		log.Fatal("[UE][NAS] ", err)
-		return
-	}
-	pduSession.Exp.CreatedTime = time.Now()
-	ue.triggerInitPduSessionRequestInner(pduSession)
-	pduSession.Exp.ActivatedTime = time.Now()
-}
-
-func (ue *UEContext) triggerInitPduSessionRequestInner(pduSession *UEPDUSession) {
-	//TODO:build N1Sm pdu
-	msg := &nas.UlNasTransport{
-		//TODO: build content
-	}
-
-	nasCtx := ue.getNasContext() //must be non nil
-	msg.SetSecurityHeader(nas.NasSecBoth)
-	if nasPdu, err := nas.EncodeMm(nasCtx, msg); err != nil {
-		log.Fatal("[UE][NAS] Error sending ul nas transport and pdu session establishment request: ", err)
-	} else {
-		// change the state of ue(SM).
-		pduSession.SetStateSM_PDU_SESSION_PENDING()
-
-		// sending to GNB
-		ue.SendNas(nasPdu)
-	}
-}
-
-func (ue *UEContext) triggerInitPduSessionRelease(pduSession *UEPDUSession) {
-	log.Info("[UE] Initiating Release of PDU Session ", pduSession.Id)
-
-	if pduSession.GetStateSM() != SM5G_PDU_SESSION_ACTIVE {
-		log.Warn("[UE][NAS] Skipping releasing the PDU Session ID ", pduSession.Id, " as it's not active")
-		return
-	}
-	//TODO:build N1Sm pdu
-
-	msg := &nas.UlNasTransport{
-		//TODO: build content
-	}
-
-	nasCtx := ue.getNasContext() //must be non nil
-	msg.SetSecurityHeader(nas.NasSecBoth)
-	if nasPdu, err := nas.EncodeMm(nasCtx, msg); err != nil {
-		log.Fatal("[UE][NAS] Error sending ul nas transport and pdu session establishment request: ", err)
-	} else {
-
-		// change the state of ue(SM).
-		pduSession.SetStateSM_PDU_SESSION_INACTIVE()
-
-		// sending to GNB
-		ue.SendNas(nasPdu)
-	}
-}
-
-func (ue *UEContext) triggerInitPduSessionReleaseComplete(pduSession *UEPDUSession) {
-	log.Info("[UE] Initiating PDU Session Release Complete for PDU Session", pduSession.Id)
-
-	if pduSession.GetStateSM() != SM5G_PDU_SESSION_INACTIVE {
-		log.Warn("[UE][NAS] Unable to send PDU Session Release Complete for a PDU Session which is not inactive")
-		return
-	}
-	//TODO:build N1Sm pdu
-
-	msg := &nas.UlNasTransport{
-		//TODO: build content
-	}
-
-	nasCtx := ue.getNasContext() //must be non nil
-	msg.SetSecurityHeader(nas.NasSecBoth)
-	if nasPdu, err := nas.EncodeMm(nasCtx, msg); err != nil {
-		log.Fatal("[UE][NAS] Error encoding ul nas transport and pdu session establishment request: ", err)
-	} else {
-
-		// sending to GNB
-		ue.SendNas(nasPdu)
 	}
 }
 
