@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (ue *UEContext) HandleExternalTrigger(msg procedures.UeTesterMessage) bool {
+func (ue *UEContext) handleExternalTrigger(msg procedures.UeTesterMessage) bool {
 	loop := true
 	switch msg.Type {
 	case procedures.Registration:
@@ -269,11 +269,11 @@ func (ue *UEContext) triggerSwitchToIdle() {
 }
 
 func (ue *UEContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {
-	ue.SetGnbRx(make(chan gnbContext.UEMessage, 1))
-	ue.SetGnbTx(make(chan gnbContext.UEMessage, 1))
+	ue.gnbRx = make(chan gnbContext.UEMessage, 1)
+	ue.gnbTx = make(chan gnbContext.UEMessage, 1)
 
 	// Send channels to gNB
-	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.GetGnbTx(), GNBRx: ue.GetGnbRx(), PrUeId: ue.GetPrUeId(), Tmsi: ue.Get5gGuti()}
-	msg := <-ue.GetGnbTx()
+	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.gnbTx, GNBRx: ue.gnbRx, PrUeId: ue.GetPrUeId(), Tmsi: ue.Get5gGuti()}
+	msg := <-ue.gnbTx
 	ue.SetAmfMccAndMnc(msg.Mcc, msg.Mnc)
 }

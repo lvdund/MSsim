@@ -1,4 +1,4 @@
-package service
+package context
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	// gtpLink "mssim/internal/cmd/gogtp5g-link"
 	// gtpTunnel "mssim/internal/cmd/gogtp5g-tunnel"
 	gnbContext "mssim/internal/control_test_engine/gnb/context"
-	"mssim/internal/control_test_engine/ue/context"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
@@ -19,7 +18,7 @@ import (
 	"time"
 )
 
-func SetupGtpInterface(ue *context.UEContext, msg gnbContext.UEMessage) {
+func (ue *UEContext) setupGtpInterface(msg gnbContext.UEMessage) {
 	gnbPduSession := msg.GNBPduSessions[0]
 	pduSession, err := ue.GetPduSession(uint8(gnbPduSession.GetPduSessionId()))
 	if pduSession == nil || err != nil {

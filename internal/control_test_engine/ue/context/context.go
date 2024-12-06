@@ -8,7 +8,6 @@ import (
 	"github.com/reogac/nas"
 	"mssim/config"
 	"mssim/internal/control_test_engine/gnb/context"
-	"mssim/internal/control_test_engine/ue/scenario"
 	"net"
 	"reflect"
 	"regexp"
@@ -43,6 +42,10 @@ const SM5G_PDU_SESSION_INACTIVE = 0x00
 const SM5G_PDU_SESSION_ACTIVE_PENDING = 0x01
 const SM5G_PDU_SESSION_ACTIVE = 0x02
 
+type ScenarioMessage struct {
+	StateChange int
+}
+
 type UEContext struct {
 	id                uint8
 	prUeId            int64
@@ -63,7 +66,7 @@ type UEContext struct {
 	TunnelMode config.TunnelMode
 
 	// Sync primitive
-	scenarioChan chan scenario.ScenarioMessage
+	scenarioChan chan ScenarioMessage
 
 	ExpFile string
 	lock    sync.Mutex
@@ -194,7 +197,7 @@ func CreateUe(cfg config.UeConfig) *UEContext {
 func (ue *UEContext) NewRanUeContext(msin string,
 	ueSecurityCapability *nasType.UESecurityCapability,
 	k, opc, op, amf, sqn, mcc, mnc, routingIndicator, dnn string,
-	sst int32, sd string, tunnelMode config.TunnelMode, scenarioChan chan scenario.ScenarioMessage,
+	sst int32, sd string, tunnelMode config.TunnelMode, scenarioChan chan ScenarioMessage,
 	gnbInboundChannel chan context.UEMessage, id int, logFile string) {
 
 	// added SUPI.
@@ -301,22 +304,22 @@ func (ue *UEContext) GetSupi() string {
 
 func (ue *UEContext) SetStateMM_DEREGISTERED_INITIATED() {
 	ue.StateMM = MM5G_DEREGISTERED_INIT
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) SetStateMM_MM5G_SERVICE_REQ_INIT() {
 	ue.StateMM = MM5G_SERVICE_REQ_INIT
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) SetStateMM_REGISTERED_INITIATED() {
 	ue.StateMM = MM5G_REGISTERED_INITIATED
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) SetStateMM_REGISTERED() {
 	ue.StateMM = MM5G_REGISTERED
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) SetStateMM_NULL() {
@@ -325,12 +328,12 @@ func (ue *UEContext) SetStateMM_NULL() {
 
 func (ue *UEContext) SetStateMM_DEREGISTERED() {
 	ue.StateMM = MM5G_DEREGISTERED
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) SetStateMM_IDLE() {
 	ue.StateMM = MM5G_IDLE
-	ue.scenarioChan <- scenario.ScenarioMessage{StateChange: ue.StateMM}
+	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
 func (ue *UEContext) GetStateMM() int {
@@ -341,26 +344,28 @@ func (ue *UEContext) SetGnbInboundChannel(gnbInboundChannel chan context.UEMessa
 	ue.gnbInboundChannel = gnbInboundChannel
 }
 
-func (ue *UEContext) SetGnbRx(gnbRx chan context.UEMessage) {
-	ue.gnbRx = gnbRx
-}
+/*
+	func (ue *UEContext) SetGnbRx(gnbRx chan context.UEMessage) {
+		ue.gnbRx = gnbRx
+	}
 
-func (ue *UEContext) SetGnbTx(gnbTx chan context.UEMessage) {
-	ue.gnbTx = gnbTx
-}
-
+	func (ue *UEContext) SetGnbTx(gnbTx chan context.UEMessage) {
+		ue.gnbTx = gnbTx
+	}
+*/
 func (ue *UEContext) GetGnbInboundChannel() chan context.UEMessage {
 	return ue.gnbInboundChannel
 }
 
-func (ue *UEContext) GetGnbRx() chan context.UEMessage {
-	return ue.gnbRx
-}
+/*
+	func (ue *UEContext) getGnbRx() chan context.UEMessage {
+		return ue.gnbRx
+	}
 
-func (ue *UEContext) GetGnbTx() chan context.UEMessage {
-	return ue.gnbTx
-}
-
+	func (ue *UEContext) GetGnbTx() chan context.UEMessage {
+		return ue.gnbTx
+	}
+*/
 func (ue *UEContext) GetDRX() <-chan time.Time {
 	if ue.drx == nil {
 		return nil

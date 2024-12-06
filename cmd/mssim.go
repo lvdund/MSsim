@@ -54,17 +54,15 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:    "ue",
-				Aliases: []string{"ue"},
-				Usage:   "one UE attached to one gnB\n",
-				Flags:   _ueFlags,
-				Action:  runUeCmd,
+				Name:   "ue",
+				Usage:  "one UE attached to one gnB\n",
+				Flags:  _ueFlags,
+				Action: runUeCmd,
 			},
 			{
-				Name:    "gnb",
-				Aliases: []string{"gnb"},
-				Usage:   "Launch only a gNB",
-				Action:  runGnbCmd,
+				Name:   "gnb",
+				Usage:  "Launch only a gNB",
+				Action: runGnbCmd,
 			},
 			{
 				Name:    "multi-ue-pdu",
@@ -84,16 +82,14 @@ func main() {
 				Action: runCustomCmd,
 			},
 			{
-				Name:    "amf-load-loop",
-				Aliases: []string{"amf-load-loop"},
+				Name: "amf-load-loop",
 				Usage: "\nTest AMF responses in interval\n" +
 					"Example for generating 20 requests to AMF per second in interval of 20 seconds: amf-load-loop -n 20 -t 20\n",
 				Flags:  _amfLoadFlags,
 				Action: runAmfLoadTestCmd,
 			},
 			{
-				Name:    "Test availability of AMF",
-				Aliases: []string{"amf-availability"},
+				Name: "amf-availability",
 				Usage: "\nTest availability of AMF in interval\n" +
 					"Test availability of AMF in 20 seconds: amf-availability -t 20\n",
 				Flags: []cli.Flag{
