@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -57,13 +58,12 @@ func SecurityModeComplete(ue *context.UEContext, rinmr uint8) ([]byte, error) {
 
 	// ueSecurityCapability := context.SetUESecurityCapability(ue)
 
-	/*
-		requestedNssai := new(nasType.RequestedNSSAI)
-		nssai := nasConvert.SnssaiToNas(models.Snssai{Sst: ue.Snssai.Sst, Sd: ue.Snssai.Sd})
-		requestedNssai.Buffer = nssai
-		requestedNssai.Len = uint8(len(nssai))
-		requestedNssai.Iei = nasMessage.RegistrationRequestRequestedNSSAIType
-	*/
+	//	requestedNssai := new(nasType.RequestedNSSAI)
+	//	nssai := nasConvert.SnssaiToNas(models.Snssai{Sst: ue.Snssai.Sst, Sd: ue.Snssai.Sd})
+	//	requestedNssai.Buffer = nssai
+	//	requestedNssai.Len = uint8(len(nssai))
+	//	requestedNssai.Iei = nasMessage.RegistrationRequestRequestedNSSAIType
+
 	if rinmr == 1 {
 		registrationRequest = GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration, nil, nil, true, ue)
 	} else {
@@ -79,3 +79,4 @@ func SecurityModeComplete(ue *context.UEContext, rinmr uint8) ([]byte, error) {
 	}
 	return pdu, nil
 }
+*/

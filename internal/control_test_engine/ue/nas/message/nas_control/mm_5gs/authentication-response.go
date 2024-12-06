@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"encoding/base64"
@@ -44,3 +45,4 @@ func AuthenticationResponse(authenticationResponseParam []uint8, eapMsg string) 
 	nasPdu = data.Bytes()
 	return
 }
+*/

@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -63,3 +64,4 @@ func getDeregistrationRequest(ue *context.UEContext) (nasPdu []byte) {
 	nasPdu = data.Bytes()
 	return
 }
+*/

@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -34,3 +35,4 @@ func IdentityResponse(ue *context.UEContext) (nasPdu []byte) {
 	nasPdu = data.Bytes()
 	return
 }
+*/

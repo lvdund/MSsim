@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -43,3 +44,4 @@ func AuthenticationFailure(cause, eapMsg string, paramAutn []byte) (nasPdu []byt
 	nasPdu = data.Bytes()
 	return
 }
+*/

@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -43,3 +44,4 @@ func getConfigurationUpdateComplete() (nasPdu []byte) {
 	nasPdu = data.Bytes()
 	return
 }
+*/

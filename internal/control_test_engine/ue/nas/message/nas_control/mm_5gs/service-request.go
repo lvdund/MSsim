@@ -1,9 +1,6 @@
-/**
- * SPDX-License-Identifier: Apache-2.0
- * © Copyright 2024 Valentin D'Emmanuele
- */
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"encoding/binary"
@@ -90,3 +87,4 @@ func boolToUint16(b bool) uint16 {
 	}
 	return 0
 }
+*/

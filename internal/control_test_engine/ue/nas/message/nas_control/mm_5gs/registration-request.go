@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"encoding/binary"
@@ -108,3 +109,4 @@ func GetRegistrationRequest(registrationType uint8, requestedNSSAI *nasType.Requ
 	}
 	return
 }
+*/

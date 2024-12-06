@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"encoding/hex"
@@ -200,3 +201,4 @@ func getUlNasTransport_PduSessionReleaseComplete(pduSessionId uint8, dnn string,
 	nasPdu = data.Bytes()
 	return
 }
+*/

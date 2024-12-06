@@ -1,5 +1,6 @@
 package mm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -52,3 +53,4 @@ func getRegistrationComplete(sorTransparentContainer []uint8) (nasPdu []byte) {
 	nasPdu = data.Bytes()
 	return
 }
+*/
