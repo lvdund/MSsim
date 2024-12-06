@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"mssim/config"
-	"mssim/internal/control_test_engine/gnb"
-	"mssim/internal/control_test_engine/procedures"
-	"mssim/internal/control_test_engine/ue"
+	"mssim/internal/gnb"
 	"mssim/internal/scenarios/script"
+	"mssim/internal/ue"
+	"mssim/internal/ue/context"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tetratelabs/wazero"
@@ -26,7 +26,7 @@ func TestWithCustomScenario(scenarioPath string) {
 
 	time.Sleep(1 * time.Second)
 
-	ueChan := make(chan procedures.UeTesterMessage)
+	ueChan := make(chan context.UeTesterMessage)
 
 	wg.Add(1)
 
@@ -37,22 +37,22 @@ func TestWithCustomScenario(scenarioPath string) {
 	_, err := runtime.NewHostModuleBuilder("env").
 		NewFunctionBuilder().
 		WithFunc(func(ueId uint32) {
-			ueChan <- procedures.UeTesterMessage{Type: procedures.Registration}
+			ueChan <- context.UeTesterMessage{Type: context.RegistrationTrigger}
 		}).
 		Export("attach").
 		NewFunctionBuilder().
 		WithFunc(func(ueId uint32) {
-			ueChan <- procedures.UeTesterMessage{Type: procedures.Deregistration}
+			ueChan <- context.UeTesterMessage{Type: context.DeregistrationTrigger}
 		}).
 		Export("detach").
 		NewFunctionBuilder().
 		WithFunc(func(ueId uint32, pduSessionId uint8) {
-			ueChan <- procedures.UeTesterMessage{Type: procedures.NewPDUSession, Param: pduSessionId - 1}
+			ueChan <- context.UeTesterMessage{Type: context.NewPDUSessionTrigger, Param: pduSessionId - 1}
 		}).
 		Export("pduSessionRequest").
 		NewFunctionBuilder().
 		WithFunc(func(ueId uint32, pduSessionId uint8) {
-			ueChan <- procedures.UeTesterMessage{Type: procedures.DestroyPDUSession, Param: pduSessionId - 1}
+			ueChan <- context.UeTesterMessage{Type: context.DestroyPDUSessionTrigger, Param: pduSessionId - 1}
 		}).
 		Export("pduSessionRelease").
 		NewFunctionBuilder().

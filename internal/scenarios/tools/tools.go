@@ -8,12 +8,11 @@ import (
 	"time"
 
 	"mssim/config"
-	"mssim/internal/control_test_engine/gnb"
-	gnbCxt "mssim/internal/control_test_engine/gnb/context"
-	"mssim/internal/control_test_engine/gnb/ngap/trigger"
-	"mssim/internal/control_test_engine/procedures"
-	"mssim/internal/control_test_engine/ue"
-	ueCtx "mssim/internal/control_test_engine/ue/context"
+	"mssim/internal/gnb"
+	gnbCxt "mssim/internal/gnb/context"
+	"mssim/internal/gnb/ngap/trigger"
+	"mssim/internal/ue"
+	ueCtx "mssim/internal/ue/context"
 
 	"errors"
 
@@ -97,7 +96,7 @@ type UESimulationConfig struct {
 	UeId                     int
 	Gnbs                     map[string]*gnbCxt.GNBContext
 	Cfg                      config.Config
-	ScenarioChan             chan procedures.UeTesterMessage
+	ScenarioChan             chan ueCtx.UeTesterMessage
 	TimeBeforeDeregistration int
 	TimeBeforeNgapHandover   int
 	TimeBeforeXnHandover     int
@@ -120,17 +119,17 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 	}
 
 	// Launch a coroutine to handle UE's individual scenario
-	go func(scenarioChan chan procedures.UeTesterMessage, ueId int) {
+	go func(scenarioChan chan ueCtx.UeTesterMessage, ueId int) {
 		wg.Add(1)
 
-		ueRx := make(chan procedures.UeTesterMessage)
+		ueRx := make(chan ueCtx.UeTesterMessage)
 
 		// Create a new UE coroutine
 		// ue.NewUE returns context of the new UE
 		ueTx := ue.NewUE(ueCfg, ueId, ueRx, simConfig.Gnbs[gnbIdGen(0)].GetInboundChannel(), wg, logFile)
 
 		// We tell the UE to perform a registration
-		ueRx <- procedures.UeTesterMessage{Type: procedures.Registration}
+		ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.RegistrationTrigger}
 
 		var deregistrationChannel <-chan time.Time = nil
 		if simConfig.TimeBeforeDeregistration != 0 {
@@ -160,7 +159,7 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 			select {
 			case <-deregistrationChannel:
 				if ueRx != nil {
-					ueRx <- procedures.UeTesterMessage{Type: procedures.Terminate}
+					ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.TerminateTrigger}
 					ueRx = nil
 				}
 			case <-ngapHandoverChannel:
@@ -171,7 +170,7 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 				nextHandoverId++
 			case <-idleChannel:
 				if ueRx != nil {
-					ueRx <- procedures.UeTesterMessage{Type: procedures.Idle}
+					ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.IdleTrigger}
 					// Channel creation to be transformed into a task ;-)
 					if simConfig.TimeBeforeReconnecting != 0 {
 						reconnectChannel = time.After(time.Duration(simConfig.TimeBeforeReconnecting) * time.Millisecond)
@@ -179,12 +178,12 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 				}
 			case <-reconnectChannel:
 				if ueRx != nil {
-					ueRx <- procedures.UeTesterMessage{Type: procedures.ServiceRequest}
+					ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.ServiceRequestTrigger}
 				}
 			case msg := <-scenarioChan:
 				if ueRx != nil {
 					ueRx <- msg
-					if msg.Type == procedures.Terminate || msg.Type == procedures.Kill {
+					if msg.Type == ueCtx.TerminateTrigger || msg.Type == ueCtx.KillTrigger {
 						ueRx = nil
 					}
 				}
@@ -194,7 +193,7 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 				case ueCtx.MM5G_REGISTERED:
 					if !registered {
 						for i := 0; i < simConfig.NumPduSessions; i++ {
-							ueRx <- procedures.UeTesterMessage{Type: procedures.NewPDUSession}
+							ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.NewPDUSessionTrigger}
 						}
 						registered = true
 					}

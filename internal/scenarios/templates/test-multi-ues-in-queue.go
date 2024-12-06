@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"mssim/config"
-	"mssim/internal/control_test_engine/procedures"
 	"mssim/internal/scenarios/tools"
+	"mssim/internal/ue/context"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -50,7 +50,7 @@ func TestMultiUesInQueue(numUes int, tunnelMode config.TunnelMode, dedicatedGnb 
 
 	cfg.Ue.TunnelMode = tunnelMode
 
-	scenarioChans := make([]chan procedures.UeTesterMessage, numUes+1)
+	scenarioChans := make([]chan context.UeTesterMessage, numUes+1)
 
 	sigStop := make(chan os.Signal, 1)
 	signal.Notify(sigStop, os.Interrupt)
@@ -75,11 +75,11 @@ func TestMultiUesInQueue(numUes int, tunnelMode config.TunnelMode, dedicatedGnb 
 			// kill it, before creating a new coroutine with same UE
 			// Use case: Registration of N UEs in loop, when loop = true
 			if scenarioChans[ueSimCfg.UeId] != nil {
-				scenarioChans[ueSimCfg.UeId] <- procedures.UeTesterMessage{Type: procedures.Kill}
+				scenarioChans[ueSimCfg.UeId] <- context.UeTesterMessage{Type: context.KillTrigger}
 				close(scenarioChans[ueSimCfg.UeId])
 				scenarioChans[ueSimCfg.UeId] = nil
 			}
-			scenarioChans[ueSimCfg.UeId] = make(chan procedures.UeTesterMessage)
+			scenarioChans[ueSimCfg.UeId] = make(chan context.UeTesterMessage)
 			ueSimCfg.ScenarioChan = scenarioChans[ueSimCfg.UeId]
 
 			wgMain.Add(1)
@@ -106,7 +106,7 @@ func TestMultiUesInQueue(numUes int, tunnelMode config.TunnelMode, dedicatedGnb 
 	}
 	for _, scenarioChan := range scenarioChans {
 		if scenarioChan != nil {
-			scenarioChan <- procedures.UeTesterMessage{Type: procedures.Terminate}
+			scenarioChan <- context.UeTesterMessage{Type: context.TerminateTrigger}
 		}
 	}
 

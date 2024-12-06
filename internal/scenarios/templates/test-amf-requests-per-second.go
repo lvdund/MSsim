@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"mssim/config"
-	"mssim/internal/control_test_engine/gnb"
+	"mssim/internal/gnb"
 	"mssim/monitoring"
 
 	log "github.com/sirupsen/logrus"
