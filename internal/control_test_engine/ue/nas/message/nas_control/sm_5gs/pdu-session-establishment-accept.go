@@ -1,5 +1,6 @@
 package sm_5gs
 
+/*
 import (
 	"fmt"
 
@@ -30,3 +31,4 @@ func DecodeNasPduAccept(ngapMsg *ngap.NgapPdu) (*nas.Message, error) {
 func GetPduAdress(m *nas.Message) [12]uint8 {
 	return m.PDUSessionEstablishmentAccept.GetPDUAddressInformation()
 }
+*/

@@ -1,5 +1,6 @@
 package sm_5gs
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -30,3 +31,4 @@ func GetPduSessionReleaseComplete(pduSessionId uint8) (nasPdu []byte) {
 	nasPdu = data.Bytes()
 	return
 }
+*/
