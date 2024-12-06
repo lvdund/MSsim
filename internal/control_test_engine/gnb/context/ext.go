@@ -3,7 +3,7 @@ package context
 import (
 	"fmt"
 	"github.com/ishidawataru/sctp"
-	"github.com/lvdund/mssim/lib/ngap/ngapSctp"
+	"mssim/lib/ngap/ngapSctp"
 )
 
 func (ue *GNBUe) ReceiveMessage(msg *UEMessage) {

@@ -3,8 +3,8 @@ package templates
 import (
 	"sync"
 
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb"
 )
 
 func TestAttachGnbWithConfiguration() {

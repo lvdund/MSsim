@@ -7,7 +7,7 @@ import (
 	"github.com/free5gc/nas"
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasType"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
+	"mssim/internal/control_test_engine/ue/context"
 )
 
 func IdentityResponse(ue *context.UEContext) (nasPdu []byte) {

@@ -3,8 +3,8 @@ package context
 import (
 	"fmt"
 	"github.com/ishidawataru/sctp"
-	"github.com/lvdund/mssim/lib/ngap/ngapSctp"
 	"github.com/lvdund/ngap/aper"
+	"mssim/lib/ngap/ngapSctp"
 )
 
 // AMF main states in the GNB Context.

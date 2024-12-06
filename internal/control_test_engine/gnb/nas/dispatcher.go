@@ -1,8 +1,8 @@
 package nas
 
 import (
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas/handler"
+	"mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/nas/handler"
 )
 
 /*

@@ -3,7 +3,7 @@ package ngap
 import (
 	"bytes"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/context"
 
 	"github.com/lvdund/ngap"
 	"github.com/lvdund/ngap/ies"

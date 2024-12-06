@@ -1,6 +1,6 @@
 package templates
 
-import "github.com/lvdund/mssim/config"
+import "mssim/config"
 
 func TestAttachUeWithConfiguration(tunnelEnabled bool) {
 	tunnelMode := config.TunnelDisabled

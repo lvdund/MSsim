@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
+	"mssim/internal/control_test_engine/ue/context"
 
 	"github.com/free5gc/nas"
 	"github.com/free5gc/nas/nasMessage"

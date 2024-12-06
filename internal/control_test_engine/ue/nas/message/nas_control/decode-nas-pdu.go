@@ -5,6 +5,7 @@ import (
 	"github.com/lvdund/ngap/ies"
 )
 
+/*
 func GetNasPduFromDownlink(msg *ies.DownlinkNASTransport) (m *nas.Message) {
 	if msg.NASPDU != nil {
 		pkg := []byte(msg.NASPDU.Value)
@@ -48,3 +49,4 @@ func GetNasPduFromDlNas(msg *ies.PDUSessionResourceSetupRequest) (m *nas.Message
 	}
 	return nil
 }
+*/

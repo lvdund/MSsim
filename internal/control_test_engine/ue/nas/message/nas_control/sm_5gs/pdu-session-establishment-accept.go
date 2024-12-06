@@ -7,7 +7,7 @@ import (
 	"github.com/lvdund/ngap"
 	"github.com/lvdund/ngap/ies"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/nas/message/nas_control"
+	"mssim/internal/control_test_engine/ue/nas/message/nas_control"
 )
 
 func DecodeNasPduAccept(ngapMsg *ngap.NgapPdu) (*nas.Message, error) {

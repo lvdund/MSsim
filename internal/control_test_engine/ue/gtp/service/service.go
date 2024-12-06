@@ -3,12 +3,12 @@ package service
 import (
 	"fmt"
 
-	"github.com/lvdund/mssim/config"
+	"mssim/config"
 
-	// gtpLink "github.com/lvdund/mssim/internal/cmd/gogtp5g-link"
-	// gtpTunnel "github.com/lvdund/mssim/internal/cmd/gogtp5g-tunnel"
-	gnbContext "github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
+	// gtpLink "mssim/internal/cmd/gogtp5g-link"
+	// gtpTunnel "mssim/internal/cmd/gogtp5g-tunnel"
+	gnbContext "mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/ue/context"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"

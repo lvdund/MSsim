@@ -4,7 +4,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/lvdund/mssim/config"
+	"mssim/config"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"

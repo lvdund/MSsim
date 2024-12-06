@@ -1,9 +1,10 @@
 package nas_control
 
+/*
 import (
 	"fmt"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
+	"mssim/internal/control_test_engine/ue/context"
 
 	"github.com/free5gc/nas"
 	"github.com/free5gc/nas/nasMessage"
@@ -80,3 +81,4 @@ func NASEncode(ue *context.UEContext, msg *nas.Message, securityContextAvailable
 	}
 	return
 }
+*/

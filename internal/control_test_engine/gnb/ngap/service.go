@@ -3,7 +3,7 @@ package ngap
 import (
 	"fmt"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/context"
 
 	"github.com/ishidawataru/sctp"
 	log "github.com/sirupsen/logrus"

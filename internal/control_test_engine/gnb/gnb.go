@@ -1,12 +1,12 @@
 package gnb
 
 import (
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	serviceNas "github.com/lvdund/mssim/internal/control_test_engine/gnb/nas/service"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/trigger"
-	"github.com/lvdund/mssim/monitoring"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb/context"
+	serviceNas "mssim/internal/control_test_engine/gnb/nas/service"
+	"mssim/internal/control_test_engine/gnb/ngap"
+	"mssim/internal/control_test_engine/gnb/ngap/trigger"
+	"mssim/monitoring"
 
 	"os"
 	"os/signal"

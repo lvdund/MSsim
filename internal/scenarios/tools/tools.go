@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb"
-	gnbCxt "github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/trigger"
-	"github.com/lvdund/mssim/internal/control_test_engine/procedures"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue"
-	ueCtx "github.com/lvdund/mssim/internal/control_test_engine/ue/context"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb"
+	gnbCxt "mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/ngap/trigger"
+	"mssim/internal/control_test_engine/procedures"
+	"mssim/internal/control_test_engine/ue"
+	ueCtx "mssim/internal/control_test_engine/ue/context"
 
 	"errors"
 

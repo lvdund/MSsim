@@ -6,8 +6,8 @@
 package ue_context_management
 
 import (
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/pdu_session_management"
+	"mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/pdu_session_management"
 
 	"github.com/lvdund/ngap"
 	"github.com/lvdund/ngap/aper"

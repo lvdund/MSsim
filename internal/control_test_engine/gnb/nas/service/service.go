@@ -6,9 +6,9 @@
 package service
 
 import (
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	//"github.com/lvdund/mssim/internal/control_test_engine/gnb/nas"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/trigger"
+	"mssim/internal/control_test_engine/gnb/context"
+	//"mssim/internal/control_test_engine/gnb/nas"
+	"mssim/internal/control_test_engine/gnb/ngap/trigger"
 
 	log "github.com/sirupsen/logrus"
 )

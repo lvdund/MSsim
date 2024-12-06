@@ -3,7 +3,7 @@ package sender
 import (
 	"fmt"
 
-	"github.com/lvdund/mssim/lib/ngap/ngapSctp"
+	"mssim/lib/ngap/ngapSctp"
 
 	"github.com/ishidawataru/sctp"
 )

@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb"
-	"github.com/lvdund/mssim/internal/control_test_engine/procedures"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue"
-	"github.com/lvdund/mssim/internal/scenarios/script"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb"
+	"mssim/internal/control_test_engine/procedures"
+	"mssim/internal/control_test_engine/ue"
+	"mssim/internal/scenarios/script"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tetratelabs/wazero"

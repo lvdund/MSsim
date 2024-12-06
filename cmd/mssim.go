@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/scenarios/templates"
-	"github.com/lvdund/mssim/monitoring"
+	"mssim/config"
+	"mssim/internal/scenarios/templates"
+	"mssim/monitoring"
 
 	"os"
 

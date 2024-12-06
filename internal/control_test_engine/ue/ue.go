@@ -4,17 +4,13 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 
-	"github.com/lvdund/mssim/config"
-	context2 "github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/procedures"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
-	serviceGtp "github.com/lvdund/mssim/internal/control_test_engine/ue/gtp/service"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/nas/service"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/nas/trigger"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/scenario"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/state"
+	"mssim/config"
+	context2 "mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/procedures"
+	"mssim/internal/control_test_engine/ue/context"
+	serviceGtp "mssim/internal/control_test_engine/ue/gtp/service"
+	"mssim/internal/control_test_engine/ue/scenario"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,7 +23,7 @@ func NewUE(conf config.Config, id int, ueMgrChannel chan procedures.UeTesterMess
 	// new UE context
 	ue.NewRanUeContext(
 		conf.Ue.Msin,
-		conf.GetUESecurityCapability(),
+		conf.Ue.GetUESecurityCapability(),
 		conf.Ue.Key,
 		conf.Ue.Opc,
 		"c9e8763286b5b9ffbdf56e1297d0887b",
@@ -46,7 +42,7 @@ func NewUE(conf config.Config, id int, ueMgrChannel chan procedures.UeTesterMess
 
 	go func() {
 		// starting communication with GNB and listen.
-		service.InitConn(ue, ue.GetGnbInboundChannel())
+		ue.InitConn(ue.GetGnbInboundChannel())
 		sigStop := make(chan os.Signal, 1)
 		signal.Notify(sigStop, os.Interrupt)
 
@@ -67,7 +63,8 @@ func NewUE(conf config.Config, id int, ueMgrChannel chan procedures.UeTesterMess
 					loop = false
 					break
 				}
-				loop = ueMgrHandler(msg, ue)
+				//loop = ueMgrHandler(msg, ue)
+				loop = ue.HandleExternalTrigger(msg)
 			case <-ue.GetDRX():
 				verifyPaging(ue)
 			}
@@ -81,7 +78,7 @@ func NewUE(conf config.Config, id int, ueMgrChannel chan procedures.UeTesterMess
 
 func gnbMsgHandler(msg context2.UEMessage, ue *context.UEContext) {
 	if msg.IsNas {
-		state.DispatchState(ue, msg.Nas)
+		ue.HandleNas(msg.Nas)
 	} else if msg.GNBPduSessions[0] != nil {
 		// Setup PDU Session
 		serviceGtp.SetupGtpInterface(ue, msg)
@@ -105,78 +102,8 @@ func verifyPaging(ue *context.UEContext) {
 	msg := <-gnbTx
 	for _, pagedUE := range msg.PagedUEs {
 		if ue.Get5gGuti() != nil && pagedUE.FiveGSTMSI != nil && [4]uint8(pagedUE.FiveGSTMSI.FiveGTMSI.Value) == ue.GetTMSI5G() {
-			ueMgrHandler(procedures.UeTesterMessage{Type: procedures.ServiceRequest}, ue)
+			ue.HandleExternalTrigger(procedures.UeTesterMessage{Type: procedures.ServiceRequest})
 			return
 		}
 	}
-}
-
-func ueMgrHandler(msg procedures.UeTesterMessage, ue *context.UEContext) bool {
-	loop := true
-	switch msg.Type {
-	case procedures.Registration:
-		trigger.InitRegistration(ue)
-	case procedures.Deregistration:
-		trigger.InitDeregistration(ue)
-	case procedures.NewPDUSession:
-		trigger.InitPduSessionRequest(ue)
-	case procedures.DestroyPDUSession:
-		pdu, err := ue.GetPduSession(msg.Param)
-		if err != nil {
-			log.Error("[UE] Cannot release unknown PDU Session ID ", msg.Param)
-			return loop
-		}
-		trigger.InitPduSessionRelease(ue, pdu)
-	case procedures.Idle:
-		// We switch UE to IDLE
-		ue.SetStateMM_IDLE()
-		trigger.SwitchToIdle(ue)
-		ue.CreateDRX(25 * time.Millisecond)
-	case procedures.ServiceRequest:
-		if ue.GetStateMM() == context.MM5G_IDLE {
-			ue.StopDRX()
-
-			// Since gNodeB stopped communication after switching to Idle, we need to connect back to gNodeB
-			service.InitConn(ue, ue.GetGnbInboundChannel())
-			if ue.Get5gGuti() != nil {
-				trigger.InitServiceRequest(ue)
-			} else {
-				// If AMF did not assign us a GUTI, we have to fallback to the usual Registration/Authentification process
-				// PDU Sessions will still be recovered
-				trigger.InitRegistration(ue)
-			}
-		}
-	case procedures.Terminate:
-		log.Info("[UE] Terminating UE as requested")
-		// If UE is registered
-		if len(ue.ExpFile) > 0 {
-			if ExpFile, err := os.OpenFile(ue.ExpFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644); err != nil {
-				log.Errorf("Failed to create logfile " + ue.ExpFile)
-			} else {
-				context.LogExpResults(ExpFile, ue)
-				ExpFile.Close()
-			}
-		}
-		if ue.GetStateMM() == context.MM5G_REGISTERED {
-			// Release PDU Sessions
-			for i := uint8(1); i <= 16; i++ {
-				pduSession, _ := ue.GetPduSession(i)
-				if pduSession != nil {
-					trigger.InitPduSessionRelease(ue, pduSession)
-					select {
-					case <-pduSession.Wait:
-					case <-time.After(500 * time.Millisecond):
-						// If still unregistered after 500 ms, continue
-					}
-				}
-			}
-			// Initiate Deregistration
-			trigger.InitDeregistration(ue)
-		}
-		// Else, nothing to do
-		loop = false
-	case procedures.Kill:
-		loop = false
-	}
-	return loop
 }

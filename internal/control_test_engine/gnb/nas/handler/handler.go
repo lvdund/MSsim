@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/nas_transport"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/sender"
+	"mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/nas_transport"
+	"mssim/internal/control_test_engine/gnb/ngap/message/sender"
 
 	log "github.com/sirupsen/logrus"
 )

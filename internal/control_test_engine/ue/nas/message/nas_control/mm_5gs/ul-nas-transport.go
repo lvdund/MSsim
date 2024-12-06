@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/nas/message/nas_control"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/nas/message/nas_control/sm_5gs"
+	"mssim/internal/control_test_engine/ue/context"
+	"mssim/internal/control_test_engine/ue/nas/message/nas_control"
+	"mssim/internal/control_test_engine/ue/nas/message/nas_control/sm_5gs"
 
 	"github.com/free5gc/nas"
 	"github.com/free5gc/nas/nasMessage"

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/procedures"
-	"github.com/lvdund/mssim/internal/scenarios/tools"
+	"mssim/config"
+	"mssim/internal/control_test_engine/procedures"
+	"mssim/internal/scenarios/tools"
 
 	log "github.com/sirupsen/logrus"
 )

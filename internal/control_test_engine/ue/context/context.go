@@ -5,15 +5,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/reogac/nas"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/ue/scenario"
 	"net"
 	"reflect"
 	"regexp"
 	"sync"
 	"time"
-
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/ue/scenario"
 
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasType"
@@ -22,7 +22,7 @@ import (
 	"github.com/free5gc/util/milenage"
 	"github.com/free5gc/util/ueauth"
 
-	auth "github.com/lvdund/mssim/internal/control_test_engine/common"
+	auth "mssim/internal/control_test_engine/common"
 
 	"github.com/free5gc/openapi/models"
 	log "github.com/sirupsen/logrus"
@@ -54,6 +54,8 @@ type UEContext struct {
 	drx               *time.Ticker
 	PduSession        [16]*UEPDUSession
 	amfInfo           Amf
+
+	secCtx *nas.SecurityContext
 
 	// TODO: Modify config so you can configure these parameters per PDUSession
 	Dnn        string
@@ -110,6 +112,83 @@ type SECURITY struct {
 	Suci                 nasType.MobileIdentity5GS
 	RoutingIndicator     string
 	Guti                 *nasType.GUTI5G
+}
+
+func CreateUe(cfg config.UeConfig) *UEContext {
+
+	ueCtx := &UEContext{}
+	/*
+
+		Msin: cfg.Msin,
+		// added ciphering algorithm.
+		ue.UeSecurity.UeSecurityCapability = ueSecurityCapability
+
+		integAlg, cipherAlg := auth.SelectAlgorithms(ue.UeSecurity.UeSecurityCapability)
+
+		// set the algorithms of integritys
+		ue.UeSecurity.IntegrityAlg = integAlg
+		// set the algorithms of ciphering
+		ue.UeSecurity.CipheringAlg = cipherAlg
+
+		// No KSI at first start
+		ue.UeSecurity.NgKsi.Ksi = 7
+		ue.UeSecurity.NgKsi.Tsc = models.ScType_NATIVE
+
+		// added key, AuthenticationManagementField and opc or op.
+		ue.SetAuthSubscription(k, opc, op, amf, sqn)
+
+		// added mcc and mnc
+		ue.UeSecurity.mcc = mcc
+		ue.UeSecurity.mnc = mnc
+
+		// added routing indidcator
+		ue.UeSecurity.RoutingIndicator = routingIndicator
+
+		// added supi
+		ue.UeSecurity.Supi = fmt.Sprintf("imsi-%s%s%s", mcc, mnc, msin)
+
+		// added UE id.
+		ue.id = uint8(id)
+		ue.prUeId = int64(id)
+
+		// added network slice
+		ue.Snssai.Sd = sd
+		ue.Snssai.Sst = sst
+
+		// added Domain Network Name.
+		ue.Dnn = dnn
+		ue.TunnelMode = tunnelMode
+
+		ue.UeSecurity.Suci = ue.EncodeSuci()
+
+		ue.gnbInboundChannel = gnbInboundChannel
+		ue.scenarioChan = scenarioChan
+
+		ue.ExpFile = logFile
+	*/
+	// added initial state for MM(NULL)
+	ueCtx.StateMM = MM5G_NULL
+
+	/*
+		conf.Ue.Msin,
+				conf.GetUESecurityCapability(),
+				conf.Ue.Key,
+				conf.Ue.Opc,
+				"c9e8763286b5b9ffbdf56e1297d0887b",
+				conf.Ue.Amf,
+				conf.Ue.Sqn,
+				conf.Ue.Hplmn.Mcc,
+				conf.Ue.Hplmn.Mnc,
+				conf.Ue.RoutingIndicator,
+				conf.Ue.Dnn,
+				int32(conf.Ue.Snssai.Sst),
+				conf.Ue.Snssai.Sd,
+				conf.Ue.TunnelMode,
+				scenarioChan,
+				gnbInboundChannel,
+				id, logFile
+	*/
+	return ueCtx
 }
 
 func (ue *UEContext) NewRanUeContext(msin string,
@@ -191,6 +270,13 @@ func (ue *UEContext) CreatePDUSession() (*UEPDUSession, error) {
 	ue.PduSession[pduSessionIndex] = pduSession
 
 	return pduSession, nil
+}
+
+func (ue *UEContext) getNasContext() *nas.NasContext {
+	if ue.secCtx != nil {
+		return ue.secCtx.NasContext()
+	}
+	return nil
 }
 
 func (ue *UEContext) GetUeId() uint8 {

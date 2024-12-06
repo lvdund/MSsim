@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/lvdund/mssim/config"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb"
-	"github.com/lvdund/mssim/monitoring"
+	"mssim/config"
+	"mssim/internal/control_test_engine/gnb"
+	"mssim/monitoring"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -1,6 +1,6 @@
 package procedures
 
-import "github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
+//import "mssim/internal/control_test_engine/gnb/context"
 
 type UeTesterMessageType int32
 
@@ -16,7 +16,7 @@ const (
 )
 
 type UeTesterMessage struct {
-	Type    UeTesterMessageType
-	Param   uint8
-	GnbChan chan context.UEMessage
+	Type  UeTesterMessageType
+	Param uint8
+	//GnbChan chan context.UEMessage
 }

@@ -1,11 +1,11 @@
 package trigger
 
 import (
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/context"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/interface_management"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/pdu_session_management"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_context_management"
-	"github.com/lvdund/mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_mobility_management"
+	"mssim/internal/control_test_engine/gnb/context"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/interface_management"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/pdu_session_management"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_context_management"
+	"mssim/internal/control_test_engine/gnb/ngap/message/ngap_control/ue_mobility_management"
 
 	"github.com/lvdund/ngap/ies"
 	log "github.com/sirupsen/logrus"
