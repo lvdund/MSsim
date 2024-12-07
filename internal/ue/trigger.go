@@ -27,7 +27,7 @@ type UeTesterMessage struct {
 	//GnbChan chan context.UEMessage
 }
 
-func (ue *UEContext) handleExternalTrigger(msg UeTesterMessage) bool {
+func (ue *UeContext) handleExternalTrigger(msg UeTesterMessage) bool {
 	loop := true
 	switch msg.Type {
 	case RegistrationTrigger:
@@ -97,7 +97,7 @@ func (ue *UEContext) handleExternalTrigger(msg UeTesterMessage) bool {
 	return loop
 }
 
-func (ue *UEContext) sendN1Sm(n1Sm []byte) {
+func (ue *UeContext) sendN1Sm(n1Sm []byte) {
 	msg := &nas.UlNasTransport{
 		PayloadContainer:     nas.Bytes(n1Sm),
 		PayloadContainerType: nas.Uint8(nas.PayloadContainerTypeN1SMInfo),
@@ -121,7 +121,7 @@ func (ue *UEContext) sendN1Sm(n1Sm []byte) {
 
 }
 
-func (ue *UEContext) triggerInitPduSessionRequest() {
+func (ue *UeContext) triggerInitPduSessionRequest() {
 	log.Info("[UE] Initiating New PDU Session")
 
 	pduSession, err := ue.CreatePDUSession()
@@ -134,7 +134,7 @@ func (ue *UEContext) triggerInitPduSessionRequest() {
 	pduSession.Exp.ActivatedTime = time.Now()
 }
 
-func (ue *UEContext) triggerInitPduSessionRequestInner(pduSession *UEPDUSession) {
+func (ue *UeContext) triggerInitPduSessionRequestInner(pduSession *UEPDUSession) {
 	n1Sm := new(nas.PduSessionEstablishmentRequest)
 	n1Sm.PduSessionType = new(nas.Uint8)
 	*n1Sm.PduSessionType = nas.Uint8(nas.PduSessionTypeIpv4)
@@ -163,7 +163,7 @@ func (ue *UEContext) triggerInitPduSessionRequestInner(pduSession *UEPDUSession)
 	pduSession.SetStateSM_PDU_SESSION_PENDING()
 }
 
-func (ue *UEContext) triggerInitPduSessionRelease(pduSession *UEPDUSession) {
+func (ue *UeContext) triggerInitPduSessionRelease(pduSession *UEPDUSession) {
 	log.Info("[UE] Initiating Release of PDU Session ", pduSession.Id)
 
 	if pduSession.GetStateSM() != SM5G_PDU_SESSION_ACTIVE {
@@ -180,7 +180,7 @@ func (ue *UEContext) triggerInitPduSessionRelease(pduSession *UEPDUSession) {
 	pduSession.SetStateSM_PDU_SESSION_INACTIVE()
 }
 
-func (ue *UEContext) triggerInitPduSessionReleaseComplete(pduSession *UEPDUSession) {
+func (ue *UeContext) triggerInitPduSessionReleaseComplete(pduSession *UEPDUSession) {
 	log.Info("[UE] Initiating PDU Session Release Complete for PDU Session", pduSession.Id)
 
 	if pduSession.GetStateSM() != SM5G_PDU_SESSION_INACTIVE {
@@ -195,7 +195,7 @@ func (ue *UEContext) triggerInitPduSessionReleaseComplete(pduSession *UEPDUSessi
 	ue.sendN1Sm(n1SmPdu)
 }
 
-func (ue *UEContext) triggerInitRegistration() {
+func (ue *UeContext) triggerInitRegistration() {
 	log.Info("[UE] Initiating Registration")
 
 	msg := &nas.RegistrationRequest{
@@ -259,7 +259,7 @@ func (ue *UEContext) triggerInitRegistration() {
 	ue.SetStateMM_DEREGISTERED()
 }
 
-func (ue *UEContext) triggerInitDeregistration() {
+func (ue *UeContext) triggerInitDeregistration() {
 	log.Info("[UE] Initiating Deregistration")
 
 	msg := &nas.DeregistrationRequestFromUe{
@@ -286,7 +286,7 @@ func (ue *UEContext) triggerInitDeregistration() {
 	}
 }
 
-func (ue *UEContext) triggerInitIdentifyResponse() {
+func (ue *UeContext) triggerInitIdentifyResponse() {
 	log.Info("[UE] Initiating Identify Response")
 
 	msg := &nas.IdentityResponse{
@@ -307,7 +307,7 @@ func (ue *UEContext) triggerInitIdentifyResponse() {
 	}
 }
 
-func (ue *UEContext) triggerInitConfigurationUpdateComplete() {
+func (ue *UeContext) triggerInitConfigurationUpdateComplete() {
 	log.Info("[UE] Initiating Configuration Update Complete")
 
 	msg := &nas.ConfigurationUpdateComplete{}
@@ -322,7 +322,7 @@ func (ue *UEContext) triggerInitConfigurationUpdateComplete() {
 	}
 }
 
-func (ue *UEContext) triggerInitServiceRequest() {
+func (ue *UeContext) triggerInitServiceRequest() {
 	log.Info("[UE] Initiating Service Request")
 
 	msg := &nas.ServiceRequest{
@@ -341,14 +341,14 @@ func (ue *UEContext) triggerInitServiceRequest() {
 	}
 }
 
-func (ue *UEContext) triggerSwitchToIdle() {
+func (ue *UeContext) triggerSwitchToIdle() {
 	log.Info("[UE] Switching to 5GMM-IDLE")
 
 	// send to GNB.
 	ue.SendGnb(gnbContext.UEMessage{Idle: true})
 }
 
-func (ue *UEContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {
+func (ue *UeContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {
 	ue.gnbRx = make(chan gnbContext.UEMessage, 1)
 	ue.gnbTx = make(chan gnbContext.UEMessage, 1)
 

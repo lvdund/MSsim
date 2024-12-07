@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-func (ue *UEContext) Service(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
+func (ue *UeContext) Service(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
 	// starting communication with GNB and listen.
 	ue.InitConn(ue.GetGnbInboundChannel())
 	sigStop := make(chan os.Signal, 1)
@@ -41,7 +41,7 @@ func (ue *UEContext) Service(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
 	wg.Done()
 }
 
-func (ue *UEContext) verifyPaging() {
+func (ue *UeContext) verifyPaging() {
 	gnbTx := make(chan gnbContext.UEMessage, 1)
 
 	ue.GetGnbInboundChannel() <- gnbContext.UEMessage{GNBTx: gnbTx, FetchPagedUEs: true}

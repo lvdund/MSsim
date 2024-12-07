@@ -5,7 +5,7 @@ import (
 	gnbContext "mssim/internal/gnb/context"
 )
 
-func (ue *UEContext) handleGnbMsg(msg gnbContext.UEMessage) {
+func (ue *UeContext) handleGnbMsg(msg gnbContext.UEMessage) {
 	if msg.IsNas {
 		ue.HandleNas(msg.Nas)
 	} else if msg.GNBPduSessions[0] != nil {

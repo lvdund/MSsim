@@ -7,7 +7,7 @@ import (
 	gnbContext "mssim/internal/gnb/context"
 )
 
-func (ue *UEContext) SendGnb(message gnbContext.UEMessage) {
+func (ue *UeContext) SendGnb(message gnbContext.UEMessage) {
 	ue.Lock()
 	if ue.gnbRx == nil {
 		log.Warn("[UE] Do not send NAS messages to gNB as channel is closed")
@@ -17,11 +17,11 @@ func (ue *UEContext) SendGnb(message gnbContext.UEMessage) {
 	ue.Unlock()
 }
 
-func (ue *UEContext) SendNas(nasPdu []byte) {
+func (ue *UeContext) SendNas(nasPdu []byte) {
 	ue.SendGnb(gnbContext.UEMessage{IsNas: true, Nas: nasPdu})
 }
 
-func (ue *UEContext) HandleNas(nasPdu []byte) {
+func (ue *UeContext) HandleNas(nasPdu []byte) {
 	// check if nasPdu is empty
 	if len(nasPdu) == 0 {
 		log.Errorf("[UE][NAS] NAS message is empty")
@@ -124,12 +124,12 @@ func handleCause5GMM(cause *nas.Uint8) {
 	}
 }
 
-func (ue *UEContext) handleAuthenticationReject(message *nas.AuthenticationReject) {
+func (ue *UeContext) handleAuthenticationReject(message *nas.AuthenticationReject) {
 	log.Info("[UE][NAS] Authentication of UE ", ue.GetUeId(), " failed")
 	ue.SetStateMM_DEREGISTERED()
 }
 
-func (ue *UEContext) handleAuthenticationRequest(message *nas.AuthenticationRequest) {
+func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequest) {
 	var responsePdu []byte
 	var response nas.GmmMessage
 
@@ -193,7 +193,7 @@ func (ue *UEContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 	ue.SendNas(responsePdu)
 }
 
-func (ue *UEContext) handleSecurityModeCommand(message *nas.SecurityModeCommand) {
+func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand) {
 	if message.Ngksi.Id == 7 {
 		log.Fatal("[UE][NAS] Error in Security Mode Command, ngKSI not the expected value")
 	}
@@ -254,7 +254,7 @@ func (ue *UEContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 	ue.SendNas(responsePdu)
 }
 
-func (ue *UEContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
+func (ue *UeContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
 
 	// change the state of ue for registered
 	ue.SetStateMM_REGISTERED()
@@ -291,12 +291,12 @@ func (ue *UEContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
 	ue.SendNas(responsePdu)
 }
 
-func (ue *UEContext) handleServiceAccept(message *nas.ServiceAccept) {
+func (ue *UeContext) handleServiceAccept(message *nas.ServiceAccept) {
 	// change the state of ue for registered
 	ue.SetStateMM_REGISTERED()
 }
 
-func (ue *UEContext) handleDlNasTransport(message *nas.DlNasTransport) {
+func (ue *UeContext) handleDlNasTransport(message *nas.DlNasTransport) {
 
 	if uint8(message.PayloadContainerType) != nas.PayloadContainerTypeN1SMInfo {
 		log.Fatal("[UE][NAS] Error in DL NAS Transport, Payload Container Type not expected value")
@@ -331,7 +331,7 @@ func (ue *UEContext) handleDlNasTransport(message *nas.DlNasTransport) {
 	}
 }
 
-func (ue *UEContext) handleIdentityRequest(message *nas.IdentityRequest) {
+func (ue *UeContext) handleIdentityRequest(message *nas.IdentityRequest) {
 
 	switch uint8(message.IdentityType) {
 	case nas.MobileIdentity5GSTypeSuci:
@@ -343,6 +343,6 @@ func (ue *UEContext) handleIdentityRequest(message *nas.IdentityRequest) {
 	ue.triggerInitIdentifyResponse()
 }
 
-func (ue *UEContext) handleConfigurationUpdateCommand(message *nas.ConfigurationUpdateCommand) {
+func (ue *UeContext) handleConfigurationUpdateCommand(message *nas.ConfigurationUpdateCommand) {
 	ue.triggerInitConfigurationUpdateComplete()
 }

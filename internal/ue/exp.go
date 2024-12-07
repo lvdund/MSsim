@@ -17,7 +17,7 @@ func (exp *Experiment) Duration() int64 {
 	return int64(exp.ActivatedTime.Sub(exp.CreatedTime))
 }
 
-func LogExpResults(logFile *os.File, ue *UEContext) {
+func LogExpResults(logFile *os.File, ue *UeContext) {
 	if ue == nil || len(ue.PduSession) == 0 {
 		return
 	} else if logFile == nil {

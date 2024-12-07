@@ -45,7 +45,7 @@ type ScenarioMessage struct {
 	StateChange int
 }
 
-type UEContext struct {
+type UeContext struct {
 	id                uint8
 	UeSecurity        SECURITY
 	StateMM           int
@@ -118,7 +118,7 @@ type SECURITY struct {
 
 func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnbInboundChannel chan gnbContext.UEMessage, wg *sync.WaitGroup, logFile string) chan ScenarioMessage {
 	scenarioChan := make(chan ScenarioMessage)
-	ue := &UEContext{
+	ue := &UeContext{
 		id: uint8(id),
 	}
 	// added SUPI.
@@ -174,7 +174,7 @@ func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnb
 	return scenarioChan
 }
 
-func (ue *UEContext) CreatePDUSession() (*UEPDUSession, error) {
+func (ue *UeContext) CreatePDUSession() (*UEPDUSession, error) {
 	pduSessionIndex := -1
 	for i, pduSession := range ue.PduSession {
 		if pduSession == nil {
@@ -196,122 +196,122 @@ func (ue *UEContext) CreatePDUSession() (*UEPDUSession, error) {
 	return pduSession, nil
 }
 
-func (ue *UEContext) getNasContext() *nas.NasContext {
+func (ue *UeContext) getNasContext() *nas.NasContext {
 	if ue.secCtx != nil {
 		return ue.secCtx.NasContext()
 	}
 	return nil
 }
 
-func (ue *UEContext) GetUeId() uint8 {
+func (ue *UeContext) GetUeId() uint8 {
 	return ue.id
 }
 
-func (ue *UEContext) GetMsin() string {
+func (ue *UeContext) GetMsin() string {
 	return ue.UeSecurity.Msin
 }
 
-func (ue *UEContext) GetSupi() string {
+func (ue *UeContext) GetSupi() string {
 	return ue.UeSecurity.Supi
 }
 
-func (ue *UEContext) SetStateMM_DEREGISTERED_INITIATED() {
+func (ue *UeContext) SetStateMM_DEREGISTERED_INITIATED() {
 	ue.StateMM = MM5G_DEREGISTERED_INIT
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) SetStateMM_MM5G_SERVICE_REQ_INIT() {
+func (ue *UeContext) SetStateMM_MM5G_SERVICE_REQ_INIT() {
 	ue.StateMM = MM5G_SERVICE_REQ_INIT
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) SetStateMM_REGISTERED_INITIATED() {
+func (ue *UeContext) SetStateMM_REGISTERED_INITIATED() {
 	ue.StateMM = MM5G_REGISTERED_INITIATED
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) SetStateMM_REGISTERED() {
+func (ue *UeContext) SetStateMM_REGISTERED() {
 	ue.StateMM = MM5G_REGISTERED
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) SetStateMM_NULL() {
+func (ue *UeContext) SetStateMM_NULL() {
 	ue.StateMM = MM5G_NULL
 }
 
-func (ue *UEContext) SetStateMM_DEREGISTERED() {
+func (ue *UeContext) SetStateMM_DEREGISTERED() {
 	ue.StateMM = MM5G_DEREGISTERED
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) SetStateMM_IDLE() {
+func (ue *UeContext) SetStateMM_IDLE() {
 	ue.StateMM = MM5G_IDLE
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
 }
 
-func (ue *UEContext) GetStateMM() int {
+func (ue *UeContext) GetStateMM() int {
 	return ue.StateMM
 }
 
-func (ue *UEContext) SetGnbInboundChannel(gnbInboundChannel chan gnbContext.UEMessage) {
+func (ue *UeContext) SetGnbInboundChannel(gnbInboundChannel chan gnbContext.UEMessage) {
 	ue.gnbInboundChannel = gnbInboundChannel
 }
 
 /*
-	func (ue *UEContext) SetGnbRx(gnbRx chan gnbContext.UEMessage) {
+	func (ue *UeContext) SetGnbRx(gnbRx chan gnbContext.UEMessage) {
 		ue.gnbRx = gnbRx
 	}
 
-	func (ue *UEContext) SetGnbTx(gnbTx chan gnbContext.UEMessage) {
+	func (ue *UeContext) SetGnbTx(gnbTx chan gnbContext.UEMessage) {
 		ue.gnbTx = gnbTx
 	}
 */
-func (ue *UEContext) GetGnbInboundChannel() chan gnbContext.UEMessage {
+func (ue *UeContext) GetGnbInboundChannel() chan gnbContext.UEMessage {
 	return ue.gnbInboundChannel
 }
 
 /*
-	func (ue *UEContext) getGnbRx() chan gnbContext.UEMessage {
+	func (ue *UeContext) getGnbRx() chan gnbContext.UEMessage {
 		return ue.gnbRx
 	}
 
-	func (ue *UEContext) GetGnbTx() chan gnbContext.UEMessage {
+	func (ue *UeContext) GetGnbTx() chan gnbContext.UEMessage {
 		return ue.gnbTx
 	}
 */
-func (ue *UEContext) GetDRX() <-chan time.Time {
+func (ue *UeContext) GetDRX() <-chan time.Time {
 	if ue.drx == nil {
 		return nil
 	}
 	return ue.drx.C
 }
 
-func (ue *UEContext) StopDRX() {
+func (ue *UeContext) StopDRX() {
 	if ue.drx != nil {
 		ue.drx.Stop()
 	}
 }
 
-func (ue *UEContext) CreateDRX(d time.Duration) {
+func (ue *UeContext) CreateDRX(d time.Duration) {
 	ue.drx = time.NewTicker(d)
 }
 
-func (ue *UEContext) Lock() {
+func (ue *UeContext) Lock() {
 	ue.lock.Lock()
 }
 
-func (ue *UEContext) Unlock() {
+func (ue *UeContext) Unlock() {
 	ue.lock.Unlock()
 }
 
-func (ue *UEContext) GetPduSession(pduSessionid uint8) (*UEPDUSession, error) {
+func (ue *UeContext) GetPduSession(pduSessionid uint8) (*UEPDUSession, error) {
 	if pduSessionid > 16 || ue.PduSession[pduSessionid-1] == nil {
 		return nil, errors.New("Unable to find GnbPDUSession ID " + string(pduSessionid))
 	}
 	return ue.PduSession[pduSessionid-1], nil
 }
 
-func (ue *UEContext) GetPduSessions() [16]*gnbContext.GnbPDUSession {
+func (ue *UeContext) GetPduSessions() [16]*gnbContext.GnbPDUSession {
 	var pduSessions [16]*gnbContext.GnbPDUSession
 
 	for i, pduSession := range ue.PduSession {
@@ -323,7 +323,7 @@ func (ue *UEContext) GetPduSessions() [16]*gnbContext.GnbPDUSession {
 	return pduSessions
 }
 
-func (ue *UEContext) DeletePduSession(pduSessionid uint8) error {
+func (ue *UeContext) DeletePduSession(pduSessionid uint8) error {
 	if pduSessionid > 16 || ue.PduSession[pduSessionid-1] == nil {
 		return errors.New("Unable to find GnbPDUSession ID " + string(pduSessionid))
 	}
@@ -413,7 +413,7 @@ func (pduSession *UEPDUSession) GetStateSM() int {
 	return pduSession.StateSM
 }
 
-func (ue *UEContext) deriveSNN() string {
+func (ue *UeContext) deriveSNN() string {
 	// 5G:mnc093.mcc208.3gppnetwork.org
 	var resu string
 	if len(ue.amfInfo.mnc) == 2 {
@@ -424,11 +424,11 @@ func (ue *UEContext) deriveSNN() string {
 	return resu
 }
 
-func (ue *UEContext) GetUeSecurityCapability() *nas.UeSecurityCapability {
+func (ue *UeContext) GetUeSecurityCapability() *nas.UeSecurityCapability {
 	return ue.UeSecurity.UeSecurityCapability
 }
 
-func (ue *UEContext) GetMccAndMncInOctets() []byte {
+func (ue *UeContext) GetMccAndMncInOctets() []byte {
 	var res string
 
 	// reverse mcc and mnc
@@ -452,7 +452,7 @@ func (ue *UEContext) GetMccAndMncInOctets() []byte {
 // shall be coded as "1111" to fill the 4 digits coding of Routing Indicator (see NOTE 2). If
 // no Routing Indicator is configured in the USIM, the UE shall coxde bits 1 to 4 of octet 8
 // of the Routing Indicator as "0000" and the remaining digits as "1111".
-func (ue *UEContext) GetRoutingIndicatorInOctets() []byte {
+func (ue *UeContext) GetRoutingIndicatorInOctets() []byte {
 	if len(ue.UeSecurity.RoutingIndicator) == 0 {
 		ue.UeSecurity.RoutingIndicator = "0"
 	}
@@ -482,13 +482,13 @@ func (ue *UEContext) GetRoutingIndicatorInOctets() []byte {
 	return encodedRoutingIndicator
 }
 
-func (ue *UEContext) getPlmnId() string {
+func (ue *UeContext) getPlmnId() string {
 	var plmnId nas.PlmnId
 	plmnId.Set(ue.UeSecurity.mcc, ue.UeSecurity.mnc)
 	return plmnId.String()
 }
 
-func (ue *UEContext) encodeSuci() nas.MobileIdentity {
+func (ue *UeContext) encodeSuci() nas.MobileIdentity {
 	msin := ue.GetMsin()
 	suci := new(nas.SupiImsi)
 	suci.Parse([]string{ue.getPlmnId(), msin})
@@ -499,31 +499,31 @@ func (ue *UEContext) encodeSuci() nas.MobileIdentity {
 	}
 }
 
-func (ue *UEContext) GetAmfRegionId() uint8 {
+func (ue *UeContext) GetAmfRegionId() uint8 {
 	return ue.UeSecurity.Guti.AmfId.GetRegion()
 }
 
-func (ue *UEContext) GetAmfPointer() uint8 {
+func (ue *UeContext) GetAmfPointer() uint8 {
 	return ue.UeSecurity.Guti.AmfId.GetPointer()
 }
 
-func (ue *UEContext) GetAmfSetId() uint16 {
+func (ue *UeContext) GetAmfSetId() uint16 {
 	return ue.UeSecurity.Guti.AmfId.GetSet()
 }
 
-func (ue *UEContext) SetAmfMccAndMnc(mcc string, mnc string) {
+func (ue *UeContext) SetAmfMccAndMnc(mcc string, mnc string) {
 	ue.amfInfo.mcc = mcc
 	ue.amfInfo.mnc = mnc
 	ue.UeSecurity.Snn = ue.deriveSNN()
 }
 
-func (ue *UEContext) GetTMSI5G() (tmsi [4]uint8) {
+func (ue *UeContext) GetTMSI5G() (tmsi [4]uint8) {
 	if id := ue.UeSecurity.Guti; id != nil {
 		binary.BigEndian.PutUint32(tmsi[:], id.Tmsi)
 	}
 	return
 }
-func (ue *UEContext) Set5gGuti(guti *nas.MobileIdentity) {
+func (ue *UeContext) Set5gGuti(guti *nas.MobileIdentity) {
 	if guti.GetType() != nas.MobileIdentity5GSType5gGuti {
 		//TODO: warn
 		return
@@ -531,11 +531,11 @@ func (ue *UEContext) Set5gGuti(guti *nas.MobileIdentity) {
 	ue.UeSecurity.Guti = guti.Id.(*nas.Guti)
 }
 
-func (ue *UEContext) Get5gGuti() *nas.Guti {
+func (ue *UeContext) Get5gGuti() *nas.Guti {
 	return ue.UeSecurity.Guti
 }
 
-func (ue *UEContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte) {
+func (ue *UeContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte) {
 
 	sqn := make([]byte, 6)
 
@@ -553,7 +553,7 @@ func (ue *UEContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte
 	return sqn, amf, mac_a
 }
 
-func (ue *UEContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
+func (ue *UeContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
 
 	RAND []byte,
 	snNmae string,
@@ -636,7 +636,7 @@ func (ue *UEContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscr
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:], "successful"
 }
 
-func (ue *UEContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
+func (ue *UeContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 
 	FC := ueauth.FC_FOR_KAUSF_DERIVATION
 	P0 := []byte(snName)
@@ -668,7 +668,7 @@ func (ue *UEContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 	}
 }
 
-func (ue *UEContext) DerivateAlgKey() {
+func (ue *UeContext) DerivateAlgKey() {
 
 	err := auth.AlgorithmKeyDerivation(ue.UeSecurity.CipheringAlg,
 		ue.UeSecurity.Kamf,
@@ -681,7 +681,7 @@ func (ue *UEContext) DerivateAlgKey() {
 	}
 }
 
-func (ue *UEContext) SetAuthSubscription(k, opc, op, amf, sqn string) {
+func (ue *UeContext) SetAuthSubscription(k, opc, op, amf, sqn string) {
 	ue.UeSecurity.AuthenticationSubs.EncPermanentKey = k
 	ue.UeSecurity.AuthenticationSubs.EncOpcKey = opc
 	ue.UeSecurity.AuthenticationSubs.EncTopcKey = op
@@ -693,7 +693,7 @@ func (ue *UEContext) SetAuthSubscription(k, opc, op, amf, sqn string) {
 	ue.UeSecurity.AuthenticationSubs.AuthenticationMethod = models.AUTHMETHOD_5G_AKA
 }
 
-func (ue *UEContext) Terminate() {
+func (ue *UeContext) Terminate() {
 	ue.SetStateMM_NULL()
 
 	// clean all context of tun interface

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (ue *UEContext) handlePduSessionEstablishmentAccept(msg *nas.PduSessionEstablishmentAccept) {
+func (ue *UeContext) handlePduSessionEstablishmentAccept(msg *nas.PduSessionEstablishmentAccept) {
 	log.Info("[UE][NAS] Receiving PDU Session Establishment Accept")
 
 	if msg.GetPti() != 1 {
@@ -52,7 +52,7 @@ func (ue *UEContext) handlePduSessionEstablishmentAccept(msg *nas.PduSessionEsta
 	}
 
 }
-func (ue *UEContext) handlePduSessionEstablishmentReject(msg *nas.PduSessionEstablishmentReject) {
+func (ue *UeContext) handlePduSessionEstablishmentReject(msg *nas.PduSessionEstablishmentReject) {
 	log.Error("[UE][NAS] Receiving PDU Session Establishment Reject")
 
 	pduSessionId := msg.GetSessionId()
@@ -78,7 +78,7 @@ func (ue *UEContext) handlePduSessionEstablishmentReject(msg *nas.PduSessionEsta
 	}
 }
 
-func (ue *UEContext) handlePduSessionReleaseCommand(msg *nas.PduSessionReleaseCommand) {
+func (ue *UeContext) handlePduSessionReleaseCommand(msg *nas.PduSessionReleaseCommand) {
 	log.Info("[UE][NAS] Receiving PDU Session Release Command")
 
 	pduSessionId := msg.GetSessionId()

@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func (ue *UEContext) setupGtpInterface(msg gnbContext.UEMessage) {
+func (ue *UeContext) setupGtpInterface(msg gnbContext.UEMessage) {
 	gnbPduSession := msg.GNBPduSessions[0]
 	pduSession, err := ue.GetPduSession(uint8(gnbPduSession.GetPduSessionId()))
 	if pduSession == nil || err != nil {
