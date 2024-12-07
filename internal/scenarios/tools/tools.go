@@ -11,8 +11,7 @@ import (
 	"mssim/internal/gnb"
 	gnbCxt "mssim/internal/gnb/context"
 	"mssim/internal/gnb/ngap/trigger"
-	"mssim/internal/ue"
-	ueCtx "mssim/internal/ue/context"
+	ueCtx "mssim/internal/ue"
 
 	"errors"
 
@@ -125,8 +124,7 @@ func SimulateSingleUE(simConfig UESimulationConfig, wg *sync.WaitGroup, wgMain *
 		ueRx := make(chan ueCtx.UeTesterMessage)
 
 		// Create a new UE coroutine
-		// ue.NewUE returns context of the new UE
-		ueTx := ue.NewUE(ueCfg, ueId, ueRx, simConfig.Gnbs[gnbIdGen(0)].GetInboundChannel(), wg, logFile)
+		ueTx := ueCtx.CreateUe(ueCfg, ueId, ueRx, simConfig.Gnbs[gnbIdGen(0)].GetInboundChannel(), wg, logFile)
 
 		// We tell the UE to perform a registration
 		ueRx <- ueCtx.UeTesterMessage{Type: ueCtx.RegistrationTrigger}

@@ -116,93 +116,16 @@ type SECURITY struct {
 	Guti                 *nas.Guti
 }
 
-func CreateUe(cfg config.UeConfig) *UEContext {
-
-	ueCtx := &UEContext{}
-	/*
-
-		Msin: cfg.Msin,
-		// added ciphering algorithm.
-		ue.UeSecurity.UeSecurityCapability = ueSecurityCapability
-
-		integAlg, cipherAlg := auth.SelectAlgorithms(ue.UeSecurity.UeSecurityCapability)
-
-		// set the algorithms of integritys
-		ue.UeSecurity.IntegrityAlg = integAlg
-		// set the algorithms of ciphering
-		ue.UeSecurity.CipheringAlg = cipherAlg
-
-		// No KSI at first start
-		ue.UeSecurity.NgKsi.Ksi = 7
-		ue.UeSecurity.NgKsi.Tsc = models.ScType_NATIVE
-
-		// added key, AuthenticationManagementField and opc or op.
-		ue.SetAuthSubscription(k, opc, op, amf, sqn)
-
-		// added mcc and mnc
-		ue.UeSecurity.mcc = mcc
-		ue.UeSecurity.mnc = mnc
-
-		// added routing indidcator
-		ue.UeSecurity.RoutingIndicator = routingIndicator
-
-		// added supi
-		ue.UeSecurity.Supi = fmt.Sprintf("imsi-%s%s%s", mcc, mnc, msin)
-
-		// added UE id.
-		ue.id = uint8(id)
-
-		// added network slice
-		ue.Snssai.Sd = sd
-		ue.Snssai.Sst = sst
-
-		// added Domain Network Name.
-		ue.Dnn = dnn
-		ue.TunnelMode = tunnelMode
-
-		ue.UeSecurity.Suci = ue.encodeSuci()
-
-		ue.gnbInboundChannel = gnbInboundChannel
-		ue.scenarioChan = scenarioChan
-
-		ue.ExpFile = logFile
-	*/
-	// added initial state for MM(NULL)
-	ueCtx.StateMM = MM5G_NULL
-
-	/*
-		conf.Ue.Msin,
-				conf.GetUESecurityCapability(),
-				conf.Ue.Key,
-				conf.Ue.Opc,
-				"c9e8763286b5b9ffbdf56e1297d0887b",
-				conf.Ue.Amf,
-				conf.Ue.Sqn,
-				conf.Ue.Hplmn.Mcc,
-				conf.Ue.Hplmn.Mnc,
-				conf.Ue.RoutingIndicator,
-				conf.Ue.Dnn,
-				int32(conf.Ue.Snssai.Sst),
-				conf.Ue.Snssai.Sd,
-				conf.Ue.TunnelMode,
-				scenarioChan,
-				gnbInboundChannel,
-				id, logFile
-	*/
-	return ueCtx
-}
-
-func (ue *UEContext) NewRanUeContext(msin string,
-	ueSecurityCapability *nas.UeSecurityCapability,
-	k, opc, op, amf, sqn, mcc, mnc, routingIndicator, dnn string,
-	sst int32, sd string, tunnelMode config.TunnelMode, scenarioChan chan ScenarioMessage,
-	gnbInboundChannel chan gnbContext.UEMessage, id int, logFile string) {
-
+func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnbInboundChannel chan gnbContext.UEMessage, wg *sync.WaitGroup, logFile string) chan ScenarioMessage {
+	scenarioChan := make(chan ScenarioMessage)
+	ue := &UEContext{
+		id: uint8(id),
+	}
 	// added SUPI.
-	ue.UeSecurity.Msin = msin
+	ue.UeSecurity.Msin = conf.Ue.Msin
 
 	// added ciphering algorithm.
-	ue.UeSecurity.UeSecurityCapability = ueSecurityCapability
+	ue.UeSecurity.UeSecurityCapability = conf.Ue.GetUESecurityCapability()
 
 	integAlg, cipherAlg := auth.SelectAlgorithms(ue.UeSecurity.UeSecurityCapability)
 
@@ -216,28 +139,26 @@ func (ue *UEContext) NewRanUeContext(msin string,
 	ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_NATIVE
 
 	// added key, AuthenticationManagementField and opc or op.
-	ue.SetAuthSubscription(k, opc, op, amf, sqn)
+	op := "c9e8763286b5b9ffbdf56e1297d0887b"
+	ue.SetAuthSubscription(conf.Ue.Key, conf.Ue.Opc, op, conf.Ue.Amf, conf.Ue.Sqn)
 
 	// added mcc and mnc
-	ue.UeSecurity.mcc = mcc
-	ue.UeSecurity.mnc = mnc
+	ue.UeSecurity.mcc = conf.Ue.Hplmn.Mcc
+	ue.UeSecurity.mnc = conf.Ue.Hplmn.Mnc
 
 	// added routing indidcator
-	ue.UeSecurity.RoutingIndicator = routingIndicator
+	ue.UeSecurity.RoutingIndicator = conf.Ue.RoutingIndicator
 
 	// added supi
-	ue.UeSecurity.Supi = fmt.Sprintf("imsi-%s%s%s", mcc, mnc, msin)
-
-	// added UE id.
-	ue.id = uint8(id)
+	ue.UeSecurity.Supi = fmt.Sprintf("imsi-%s%s%s", conf.Ue.Hplmn.Mcc, conf.Ue.Hplmn.Mnc, conf.Ue.Msin)
 
 	// added network slice
-	ue.Snssai.Sd = sd
-	ue.Snssai.Sst = int(sst)
+	ue.Snssai.Sd = conf.Ue.Snssai.Sd
+	ue.Snssai.Sst = int(conf.Ue.Snssai.Sst)
 
 	// added Domain Network Name.
-	ue.Dnn = dnn
-	ue.TunnelMode = tunnelMode
+	ue.Dnn = conf.Ue.Dnn
+	ue.TunnelMode = conf.Ue.TunnelMode
 
 	ue.UeSecurity.Suci = ue.encodeSuci()
 
@@ -248,6 +169,9 @@ func (ue *UEContext) NewRanUeContext(msin string,
 
 	// added initial state for MM(NULL)
 	ue.StateMM = MM5G_NULL
+
+	go ue.Service(wg, ueMgrChannel)
+	return scenarioChan
 }
 
 func (ue *UEContext) CreatePDUSession() (*UEPDUSession, error) {
