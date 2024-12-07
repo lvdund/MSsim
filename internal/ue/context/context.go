@@ -57,6 +57,7 @@ type UEContext struct {
 	amfInfo           Amf
 
 	secCtx *nas.SecurityContext
+	nasPdu []byte //registration request
 
 	// TODO: Modify config so you can configure these parameters per PDUSession
 	Dnn        string

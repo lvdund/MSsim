@@ -36,6 +36,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/reogac/nas v0.0.0-20241206061029-a40e401665d1 h1:QU9cR40KDcPY/54Kc9ji7bDBojTg+eIGgQaEI5ouJtE=
 github.com/reogac/nas v0.0.0-20241206061029-a40e401665d1/go.mod h1:zLQ4qTG16J1ekkLeK3tRrmfGrU3jP7h/2AbJlk3IjU8=
+github.com/reogac/nas v0.0.0-20241207155838-43e21bd0dbd0 h1:iXZ1t/kEf2iFDkZF+A5Lyg10qS5tyKMfL87ExUCN/K0=
+github.com/reogac/nas v0.0.0-20241207155838-43e21bd0dbd0/go.mod h1:zLQ4qTG16J1ekkLeK3tRrmfGrU3jP7h/2AbJlk3IjU8=
 github.com/reogac/sbi v0.0.0-20241207080206-801dfd8c43a1 h1:fd5defc41Xv00o+SlNYmB2jv0GGhB9wMaXdQ3zSWqSQ=
 github.com/reogac/sbi v0.0.0-20241207080206-801dfd8c43a1/go.mod h1:fSOMrq4GK+BwHNjCPLQhBs8FkVjtIp/4JEvCv4dknf0=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=

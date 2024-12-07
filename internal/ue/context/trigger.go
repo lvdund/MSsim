@@ -199,23 +199,64 @@ func (ue *UEContext) triggerInitRegistration() {
 	log.Info("[UE] Initiating Registration")
 
 	msg := &nas.RegistrationRequest{
-		//TODO: build  RegistrationRequest content
+		UeSecurityCapability: ue.UeSecurity.UeSecurityCapability,
 	}
-	nasCtx := ue.getNasContext()
-	if nasCtx != nil {
-		msg.SetSecurityHeader(nas.NasSecBoth)
-	} else {
-		msg.SetSecurityHeader(nas.NasSecNone)
-	}
-	if nasPdu, err := nas.EncodeMm(nasCtx, msg); err != nil {
-		log.Fatalf("[UE][NAS] Unable to encode Registration Request: %s", err)
-	} else {
-		// send to GNB.
-		ue.SendNas(nasPdu)
+	msg.RegistrationType.Value = nas.RegistrationType5GSInitialRegistration
 
-		// change the state of ue for deregistered
-		ue.SetStateMM_DEREGISTERED()
+	if guti := ue.UeSecurity.Guti; guti != nil {
+		msg.MobileIdentity = nas.MobileIdentity{
+			Id: guti,
+		}
+	} else {
+		msg.MobileIdentity = ue.UeSecurity.Suci
 	}
+	msg.Ngksi.Id = uint8(ue.UeSecurity.NgKsi.Ksi)
+	var gmmCap [13]byte
+	gmmCap[0] = 0x07
+	msg.GmmCapability = new(nas.GmmCapability)
+	msg.GmmCapability.Bytes = nas.Bytes(gmmCap[:])
+
+	var pduFlag [16]bool
+	hasPdu := false
+	for i, pduSession := range ue.PduSession {
+		if pduSession != nil {
+			hasPdu = true
+			pduFlag[i] = true
+		}
+	}
+
+	if hasPdu {
+		msg.UplinkDataStatus = new(nas.UplinkDataStatus)
+		msg.UplinkDataStatus.Set(pduFlag)
+
+		msg.PduSessionStatus = new(nas.PduSessionStatus)
+		msg.PduSessionStatus.Set(pduFlag)
+	}
+	//TODO: RequestedNssai
+	//
+	nasPdu, _ := nas.EncodeMm(nil, msg)
+	//Keep a copy of this registration request
+	ue.nasPdu = make([]byte, len(nasPdu))
+	copy(ue.nasPdu, nasPdu)
+
+	if hasPdu {
+		//encrypt the request
+		nasCtx := ue.getNasContext()                   //must be non-nil
+		cipher, _ := nasCtx.EncryptMmContainer(nasPdu) //ignore error for now
+		//embed the encrypted request into the original one
+		msg.NasMessageContainer = new(nas.Bytes)
+		*msg.NasMessageContainer = cipher
+		//reset UplinkDataStatus and PduSessionStatus
+		msg.UplinkDataStatus = nil
+		msg.PduSessionStatus = nil
+		//now plaintext-encode again
+		nasPdu, _ = nas.EncodeMm(nil, msg)
+	}
+	// send to GNB.
+	ue.SendNas(nasPdu)
+
+	// change the state of ue for deregistered
+	ue.SetStateMM_DEREGISTERED()
 }
 
 func (ue *UEContext) triggerInitDeregistration() {

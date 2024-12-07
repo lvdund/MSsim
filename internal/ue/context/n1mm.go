@@ -216,10 +216,10 @@ func (ue *UEContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 		log.Info("[UE][NAS] Type of integrity protection algorithm is 128-5G-IA2")
 	}
 
-	//rinmr := uint8(0)
+	rinmr := false
 	if message.AdditionalSecurityInformation != nil {
 		// checking BIT RINMR that triggered registration request in security mode complete.
-		//TODO: rinmr = message..AdditionalSecurityInformation.GetRINMR()
+		rinmr = message.AdditionalSecurityInformation.GetRetransmission()
 	}
 
 	ue.UeSecurity.NgKsi.Ksi = int(message.Ngksi.Id)
@@ -232,18 +232,21 @@ func (ue *UEContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 		ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_MAPPED
 	}
 	//TODO: activate security context
-	//TODO: add nas container
-	nasContainer := []byte{}
 
 	imeisv := new(nas.Imei)
 	imeisv.Parse("1111111111111111") //dummy imei
 	response := &nas.SecurityModeComplete{
-		NasMessageContainer: new(nas.Bytes),
 		Imeisv: &nas.MobileIdentity{
 			Id: imeisv,
 		},
 	}
-	*response.NasMessageContainer = nasContainer
+	if rinmr {
+		nasCtx := ue.getNasContext() //must be non-nil
+		//encrypt last sending registration request
+		cipher, _ := nasCtx.EncryptMmContainer(ue.nasPdu)
+		response.NasMessageContainer = new(nas.Bytes)
+		*response.NasMessageContainer = cipher
+	}
 
 	nasCtx := ue.getNasContext()
 	responsePdu, _ := nas.EncodeMm(nasCtx, response)

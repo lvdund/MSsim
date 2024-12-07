@@ -14,7 +14,7 @@ require (
 	github.com/khirono/go-nl v1.0.5
 	github.com/khirono/go-rtnllink v1.1.1
 	github.com/lvdund/ngap v1.3.5
-	github.com/reogac/nas v0.0.0-20241206061029-a40e401665d1
+	github.com/reogac/nas v0.0.0-20241207155838-43e21bd0dbd0
 	github.com/reogac/sbi v0.0.0-20241207080206-801dfd8c43a1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.27.5
