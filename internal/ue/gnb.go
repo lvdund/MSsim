@@ -7,7 +7,7 @@ import (
 
 func (ue *UeContext) handleGnbMsg(msg gnbContext.UEMessage) {
 	if msg.IsNas {
-		ue.HandleNas(msg.Nas)
+		ue.handleNas(msg.Nas)
 	} else if msg.GNBPduSessions[0] != nil {
 		// Setup PDU Session
 		ue.setupGtpInterface(msg)

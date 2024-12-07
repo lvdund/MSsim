@@ -116,7 +116,7 @@ func (ue *UeContext) sendN1Sm(n1Sm []byte) {
 	} else {
 
 		// sending to GNB
-		ue.SendNas(nasPdu)
+		ue.sendNas(nasPdu)
 	}
 
 }
@@ -253,7 +253,7 @@ func (ue *UeContext) triggerInitRegistration() {
 		nasPdu, _ = nas.EncodeMm(nil, msg)
 	}
 	// send to GNB.
-	ue.SendNas(nasPdu)
+	ue.sendNas(nasPdu)
 
 	// change the state of ue for deregistered
 	ue.SetStateMM_DEREGISTERED()
@@ -280,7 +280,7 @@ func (ue *UeContext) triggerInitDeregistration() {
 		log.Fatal("[UE][NAS] Error encoding deregistration request: ", err)
 	} else {
 		// send to GNB.
-		ue.SendNas(nasPdu)
+		ue.sendNas(nasPdu)
 		// change the state of ue for deregistered
 		ue.SetStateMM_DEREGISTERED()
 	}
@@ -303,7 +303,7 @@ func (ue *UeContext) triggerInitIdentifyResponse() {
 		log.Fatal("[UE][NAS] Error encoding identity request: ", err)
 	} else {
 		// send to GNB.
-		ue.SendNas(nasPdu)
+		ue.sendNas(nasPdu)
 	}
 }
 
@@ -318,7 +318,7 @@ func (ue *UeContext) triggerInitConfigurationUpdateComplete() {
 		log.Fatal("[UE][NAS] Error encoding Configuration Update Complete: ", err)
 	} else {
 		// send to GNB.
-		ue.SendNas(nasPdu)
+		ue.sendNas(nasPdu)
 	}
 }
 
@@ -337,7 +337,7 @@ func (ue *UeContext) triggerInitServiceRequest() {
 	} else {
 
 		// send to GNB.
-		ue.SendNas(nasPdu)
+		ue.sendNas(nasPdu)
 	}
 }
 
@@ -345,7 +345,7 @@ func (ue *UeContext) triggerSwitchToIdle() {
 	log.Info("[UE] Switching to 5GMM-IDLE")
 
 	// send to GNB.
-	ue.SendGnb(gnbContext.UEMessage{Idle: true})
+	ue.sendGnb(gnbContext.UEMessage{Idle: true})
 }
 
 func (ue *UeContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {

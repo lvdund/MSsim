@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-func (ue *UeContext) Service(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
+func (ue *UeContext) runService(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
 	// starting communication with GNB and listen.
 	ue.InitConn(ue.GetGnbInboundChannel())
 	sigStop := make(chan os.Signal, 1)

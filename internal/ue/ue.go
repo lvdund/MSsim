@@ -170,7 +170,7 @@ func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnb
 	// added initial state for MM(NULL)
 	ue.StateMM = MM5G_NULL
 
-	go ue.Service(wg, ueMgrChannel)
+	go ue.runService(wg, ueMgrChannel)
 	return scenarioChan
 }
 
@@ -257,28 +257,10 @@ func (ue *UeContext) SetGnbInboundChannel(gnbInboundChannel chan gnbContext.UEMe
 	ue.gnbInboundChannel = gnbInboundChannel
 }
 
-/*
-	func (ue *UeContext) SetGnbRx(gnbRx chan gnbContext.UEMessage) {
-		ue.gnbRx = gnbRx
-	}
-
-	func (ue *UeContext) SetGnbTx(gnbTx chan gnbContext.UEMessage) {
-		ue.gnbTx = gnbTx
-	}
-*/
 func (ue *UeContext) GetGnbInboundChannel() chan gnbContext.UEMessage {
 	return ue.gnbInboundChannel
 }
 
-/*
-	func (ue *UeContext) getGnbRx() chan gnbContext.UEMessage {
-		return ue.gnbRx
-	}
-
-	func (ue *UeContext) GetGnbTx() chan gnbContext.UEMessage {
-		return ue.gnbTx
-	}
-*/
 func (ue *UeContext) GetDRX() <-chan time.Time {
 	if ue.drx == nil {
 		return nil
@@ -553,7 +535,7 @@ func (ue *UeContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte
 	return sqn, amf, mac_a
 }
 
-func (ue *UeContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
+func (ue *UeContext) deriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
 
 	RAND []byte,
 	snNmae string,
@@ -628,7 +610,7 @@ func (ue *UeContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscr
 	P1 := RAND
 	P2 := RES
 
-	ue.DerivateKamf(key, snNmae, sqnHn, AK)
+	ue.derivateKamf(key, snNmae, sqnHn, AK)
 	kdfVal_for_resStar, err := ueauth.GetKDFValue(key, FC, P0, ueauth.KDFLen(P0), P1, ueauth.KDFLen(P1), P2, ueauth.KDFLen(P2))
 	if err != nil {
 		log.Fatal("[UE] Error while deriving KDF ", err)
@@ -636,7 +618,7 @@ func (ue *UeContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscr
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:], "successful"
 }
 
-func (ue *UeContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
+func (ue *UeContext) derivateKamf(key []byte, snName string, SQN, AK []byte) {
 
 	FC := ueauth.FC_FOR_KAUSF_DERIVATION
 	P0 := []byte(snName)

@@ -7,7 +7,7 @@ import (
 	gnbContext "mssim/internal/gnb/context"
 )
 
-func (ue *UeContext) SendGnb(message gnbContext.UEMessage) {
+func (ue *UeContext) sendGnb(message gnbContext.UEMessage) {
 	ue.Lock()
 	if ue.gnbRx == nil {
 		log.Warn("[UE] Do not send NAS messages to gNB as channel is closed")
@@ -17,11 +17,11 @@ func (ue *UeContext) SendGnb(message gnbContext.UEMessage) {
 	ue.Unlock()
 }
 
-func (ue *UeContext) SendNas(nasPdu []byte) {
-	ue.SendGnb(gnbContext.UEMessage{IsNas: true, Nas: nasPdu})
+func (ue *UeContext) sendNas(nasPdu []byte) {
+	ue.sendGnb(gnbContext.UEMessage{IsNas: true, Nas: nasPdu})
 }
 
-func (ue *UeContext) HandleNas(nasPdu []byte) {
+func (ue *UeContext) handleNas(nasPdu []byte) {
 	// check if nasPdu is empty
 	if len(nasPdu) == 0 {
 		log.Errorf("[UE][NAS] NAS message is empty")
@@ -152,7 +152,7 @@ func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 	autn := []byte(*message.AuthenticationParameterAutn)
 
 	// getting resStar
-	paramAutn, check := ue.DeriveRESstarAndSetKey(ue.UeSecurity.AuthenticationSubs, rand[:], ue.UeSecurity.Snn, autn[:])
+	paramAutn, check := ue.deriveRESstarAndSetKey(ue.UeSecurity.AuthenticationSubs, rand[:], ue.UeSecurity.Snn, autn[:])
 	switch check {
 
 	case "MAC failure":
@@ -190,7 +190,7 @@ func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 	}
 	responsePdu, _ = nas.EncodeMm(nil, response)
 	// sending to GNB
-	ue.SendNas(responsePdu)
+	ue.sendNas(responsePdu)
 }
 
 func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand) {
@@ -251,7 +251,7 @@ func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 	nasCtx := ue.getNasContext()
 	responsePdu, _ := nas.EncodeMm(nasCtx, response)
 	// sending to GNB
-	ue.SendNas(responsePdu)
+	ue.sendNas(responsePdu)
 }
 
 func (ue *UeContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
@@ -288,7 +288,7 @@ func (ue *UeContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
 	nasCtx := ue.getNasContext() //must be non-nil
 	responsePdu, _ := nas.EncodeMm(nasCtx, response)
 	// sending to GNB
-	ue.SendNas(responsePdu)
+	ue.sendNas(responsePdu)
 }
 
 func (ue *UeContext) handleServiceAccept(message *nas.ServiceAccept) {
