@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/free5gc/nas/nasType"
 	"github.com/ishidawataru/sctp"
 	"github.com/lvdund/ngap/aper"
 	"github.com/lvdund/ngap/ies"
 	"github.com/lvdund/ngap/utils"
+	"github.com/reogac/nas"
 	log "github.com/sirupsen/logrus"
 	gtpv1 "github.com/wmnsk/go-gtp/gtpv1"
 )
@@ -84,7 +84,7 @@ func (gnb *GNBContext) NewRanGnbContext(gnbId, mcc, mnc, tac, sst, sd, ip, ipDat
 	gnb.dataInfo.gnbPort = portData
 }
 
-func (gnb *GNBContext) NewGnBUe(gnbTx chan UEMessage, gnbRx chan UEMessage, prUeId int64, tmsi *nasType.GUTI5G) (*GNBUe, error) {
+func (gnb *GNBContext) NewGnBUe(gnbTx chan UEMessage, gnbRx chan UEMessage, prUeId int64, tmsi *nas.Guti) (*GNBUe, error) {
 
 	// TODO if necessary add more information for UE.
 	// TODO implement mutex

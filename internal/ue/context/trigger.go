@@ -222,7 +222,15 @@ func (ue *UEContext) triggerInitDeregistration() {
 	log.Info("[UE] Initiating Deregistration")
 
 	msg := &nas.DeregistrationRequestFromUe{
-		//TODO: set content
+		Ngksi: *ue.UeSecurity.NgKsi.NasType(),
+	}
+	msg.DeRegistrationType.SetSwitchOff(true)
+	msg.DeRegistrationType.SetReregistration(false)
+	msg.DeRegistrationType.SetAccessType(nas.AccessType3GPP)
+	if ue.UeSecurity.Guti != nil {
+		msg.MobileIdentity.Id = ue.UeSecurity.Guti
+	} else {
+		msg.MobileIdentity = ue.UeSecurity.Suci
 	}
 
 	nasCtx := ue.getNasContext() //must be non nil
@@ -241,7 +249,7 @@ func (ue *UEContext) triggerInitIdentifyResponse() {
 	log.Info("[UE] Initiating Identify Response")
 
 	msg := &nas.IdentityResponse{
-		//TODO: set content
+		MobileIdentity: ue.UeSecurity.Suci, //TODO: can be SUCI/IMEISV etc
 	}
 	nasCtx := ue.getNasContext()
 	if nasCtx != nil {
@@ -261,9 +269,7 @@ func (ue *UEContext) triggerInitIdentifyResponse() {
 func (ue *UEContext) triggerInitConfigurationUpdateComplete() {
 	log.Info("[UE] Initiating Configuration Update Complete")
 
-	msg := &nas.ConfigurationUpdateComplete{
-		//TODO: set content
-	}
+	msg := &nas.ConfigurationUpdateComplete{}
 	nasCtx := ue.getNasContext()
 	msg.SetSecurityHeader(nas.NasSecBoth)
 
@@ -306,7 +312,7 @@ func (ue *UEContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {
 	ue.gnbTx = make(chan gnbContext.UEMessage, 1)
 
 	// Send channels to gNB
-	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.gnbTx, GNBRx: ue.gnbRx, PrUeId: ue.GetPrUeId(), Tmsi: ue.Get5gGuti()}
+	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.gnbTx, GNBRx: ue.gnbRx, PrUeId: int64(ue.id), Tmsi: ue.Get5gGuti()}
 	msg := <-ue.gnbTx
 	ue.SetAmfMccAndMnc(msg.Mcc, msg.Mnc)
 }

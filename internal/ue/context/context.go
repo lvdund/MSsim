@@ -2,6 +2,7 @@ package context
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -14,8 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/nasType"
 	"github.com/free5gc/nas/security"
 
 	"github.com/free5gc/util/milenage"
@@ -48,7 +47,6 @@ type ScenarioMessage struct {
 
 type UEContext struct {
 	id                uint8
-	prUeId            int64
 	UeSecurity        SECURITY
 	StateMM           int
 	gnbInboundChannel chan gnbContext.UEMessage
@@ -103,7 +101,7 @@ type SECURITY struct {
 	mnc                  string
 	ULCount              security.Count
 	DLCount              security.Count
-	UeSecurityCapability *nasType.UESecurityCapability
+	UeSecurityCapability *nas.UeSecurityCapability
 	IntegrityAlg         uint8
 	CipheringAlg         uint8
 	NgKsi                models.NgKsi
@@ -112,9 +110,9 @@ type SECURITY struct {
 	KnasInt              [16]uint8
 	Kamf                 []uint8
 	AuthenticationSubs   models.AuthenticationSubscription
-	Suci                 nasType.MobileIdentity5GS
+	Suci                 nas.MobileIdentity
 	RoutingIndicator     string
-	Guti                 *nasType.GUTI5G
+	Guti                 *nas.Guti
 }
 
 func CreateUe(cfg config.UeConfig) *UEContext {
@@ -152,7 +150,6 @@ func CreateUe(cfg config.UeConfig) *UEContext {
 
 		// added UE id.
 		ue.id = uint8(id)
-		ue.prUeId = int64(id)
 
 		// added network slice
 		ue.Snssai.Sd = sd
@@ -162,7 +159,7 @@ func CreateUe(cfg config.UeConfig) *UEContext {
 		ue.Dnn = dnn
 		ue.TunnelMode = tunnelMode
 
-		ue.UeSecurity.Suci = ue.EncodeSuci()
+		ue.UeSecurity.Suci = ue.encodeSuci()
 
 		ue.gnbInboundChannel = gnbInboundChannel
 		ue.scenarioChan = scenarioChan
@@ -195,7 +192,7 @@ func CreateUe(cfg config.UeConfig) *UEContext {
 }
 
 func (ue *UEContext) NewRanUeContext(msin string,
-	ueSecurityCapability *nasType.UESecurityCapability,
+	ueSecurityCapability *nas.UeSecurityCapability,
 	k, opc, op, amf, sqn, mcc, mnc, routingIndicator, dnn string,
 	sst int32, sd string, tunnelMode config.TunnelMode, scenarioChan chan ScenarioMessage,
 	gnbInboundChannel chan gnbContext.UEMessage, id int, logFile string) {
@@ -232,7 +229,6 @@ func (ue *UEContext) NewRanUeContext(msin string,
 
 	// added UE id.
 	ue.id = uint8(id)
-	ue.prUeId = int64(id)
 
 	// added network slice
 	ue.Snssai.Sd = sd
@@ -242,7 +238,7 @@ func (ue *UEContext) NewRanUeContext(msin string,
 	ue.Dnn = dnn
 	ue.TunnelMode = tunnelMode
 
-	ue.UeSecurity.Suci = ue.EncodeSuci()
+	ue.UeSecurity.Suci = ue.encodeSuci()
 
 	ue.gnbInboundChannel = gnbInboundChannel
 	ue.scenarioChan = scenarioChan
@@ -284,14 +280,6 @@ func (ue *UEContext) getNasContext() *nas.NasContext {
 
 func (ue *UEContext) GetUeId() uint8 {
 	return ue.id
-}
-
-func (ue *UEContext) GetPrUeId() int64 {
-	return ue.prUeId
-}
-
-func (ue *UEContext) GetSuci() nasType.MobileIdentity5GS {
-	return ue.UeSecurity.Suci
 }
 
 func (ue *UEContext) GetMsin() string {
@@ -511,7 +499,7 @@ func (ue *UEContext) deriveSNN() string {
 	return resu
 }
 
-func (ue *UEContext) GetUeSecurityCapability() *nasType.UESecurityCapability {
+func (ue *UEContext) GetUeSecurityCapability() *nas.UeSecurityCapability {
 	return ue.UeSecurity.UeSecurityCapability
 }
 
@@ -569,45 +557,33 @@ func (ue *UEContext) GetRoutingIndicatorInOctets() []byte {
 	return encodedRoutingIndicator
 }
 
-func (ue *UEContext) EncodeSuci() nasType.MobileIdentity5GS {
+func (ue *UEContext) getPlmnId() string {
+	var plmnId nas.PlmnId
+	plmnId.Set(ue.UeSecurity.mcc, ue.UeSecurity.mnc)
+	return plmnId.String()
+}
+
+func (ue *UEContext) encodeSuci() nas.MobileIdentity {
 	msin := ue.GetMsin()
-	suci := nasType.MobileIdentity5GS{
-		Buffer: []uint8{nasMessage.SupiFormatImsi<<4 |
-			nasMessage.MobileIdentity5GSTypeSuci, 0x0, 0x0, 0x0, 0xf0, 0xff, 0x00, 0x00},
+	suci := new(nas.SupiImsi)
+	suci.Parse([]string{ue.getPlmnId(), msin})
+	return nas.MobileIdentity{
+		Id: &nas.Suci{
+			Content: suci,
+		},
 	}
-
-	//mcc & mnc
-	mccmnc := ue.GetMccAndMncInOctets()
-	copy(suci.Buffer[1:], mccmnc)
-
-	routingIndicator := ue.GetRoutingIndicatorInOctets()
-	suci.Buffer[4] = routingIndicator[0]
-	suci.Buffer[5] = routingIndicator[1]
-
-	for i := 0; i < len(msin); i += 2 {
-		suci.Buffer = append(suci.Buffer, 0x0)
-		j := len(suci.Buffer) - 1
-		if i+1 == len(msin) {
-			suci.Buffer[j] = 0xf<<4 | hexCharToByte(msin[i])
-		} else {
-			suci.Buffer[j] = hexCharToByte(msin[i+1])<<4 | hexCharToByte(msin[i])
-		}
-	}
-
-	suci.Len = uint16(len(suci.Buffer))
-	return suci
 }
 
 func (ue *UEContext) GetAmfRegionId() uint8 {
-	return ue.UeSecurity.Guti.GetAMFRegionID()
+	return ue.UeSecurity.Guti.AmfId.GetRegion()
 }
 
 func (ue *UEContext) GetAmfPointer() uint8 {
-	return ue.UeSecurity.Guti.GetAMFPointer()
+	return ue.UeSecurity.Guti.AmfId.GetPointer()
 }
 
 func (ue *UEContext) GetAmfSetId() uint16 {
-	return ue.UeSecurity.Guti.GetAMFSetID()
+	return ue.UeSecurity.Guti.AmfId.GetSet()
 }
 
 func (ue *UEContext) SetAmfMccAndMnc(mcc string, mnc string) {
@@ -616,18 +592,21 @@ func (ue *UEContext) SetAmfMccAndMnc(mcc string, mnc string) {
 	ue.UeSecurity.Snn = ue.deriveSNN()
 }
 
-func (ue *UEContext) GetTMSI5G() [4]uint8 {
-	if ue.UeSecurity.Guti != nil {
-		return ue.UeSecurity.Guti.GetTMSI5G()
+func (ue *UEContext) GetTMSI5G() (tmsi [4]uint8) {
+	if id := ue.UeSecurity.Guti; id != nil {
+		binary.BigEndian.PutUint32(tmsi[:], id.Tmsi)
 	}
-	return [4]uint8{}
+	return
+}
+func (ue *UEContext) Set5gGuti(guti *nas.MobileIdentity) {
+	if guti.GetType() != nas.MobileIdentity5GSType5gGuti {
+		//TODO: warn
+		return
+	}
+	ue.UeSecurity.Guti = guti.Id.(*nas.Guti)
 }
 
-func (ue *UEContext) Set5gGuti(guti *nasType.GUTI5G) {
-	ue.UeSecurity.Guti = guti
-}
-
-func (ue *UEContext) Get5gGuti() *nasType.GUTI5G {
+func (ue *UEContext) Get5gGuti() *nas.Guti {
 	return ue.UeSecurity.Guti
 }
 

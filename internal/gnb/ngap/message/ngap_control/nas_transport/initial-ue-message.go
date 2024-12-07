@@ -5,7 +5,7 @@ import (
 
 	"mssim/internal/gnb/context"
 
-	"github.com/free5gc/nas/nasType"
+	"github.com/reogac/nas"
 
 	"github.com/lvdund/ngap"
 	"github.com/lvdund/ngap/aper"
@@ -19,7 +19,7 @@ func init() {
 	TestPlmn.Value = aper.OctetString("\x02\xf8\x39")
 }
 
-func GetInitialUEMessage(ranUeNgapID int64, nasPdu []byte, guti5g *nasType.GUTI5G, gnb *context.GNBContext) ([]byte, error) {
+func GetInitialUEMessage(ranUeNgapID int64, nasPdu []byte, guti5g *nas.Guti, gnb *context.GNBContext) ([]byte, error) {
 	msg := ies.InitialUEMessage{}
 
 	msg.RANUENGAPID = &ies.RANUENGAPID{

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/free5gc/nas/nasType"
 	"github.com/ishidawataru/sctp"
 	"github.com/lvdund/ngap/ies"
+	"github.com/reogac/nas"
 )
 
 // UE main states in the GNB Context.
@@ -24,7 +24,7 @@ type GNBUe struct {
 	gnbRx          chan UEMessage
 	gnbTx          chan UEMessage
 	pRueId         int64 // MSsim unique UE ID
-	tmsi           *nasType.GUTI5G
+	tmsi           *nas.Guti
 	context        Context
 	lock           sync.Mutex
 	newGnb         *GNBContext
@@ -234,11 +234,11 @@ func (ue *GNBUe) GetPrUeId() int64 {
 	return ue.pRueId
 }
 
-func (ue *GNBUe) SetTMSI(tmsi *nasType.GUTI5G) {
+func (ue *GNBUe) SetTMSI(tmsi *nas.Guti) {
 	ue.tmsi = tmsi
 }
 
-func (ue *GNBUe) GetTMSI() *nasType.GUTI5G {
+func (ue *GNBUe) GetTMSI() *nas.Guti {
 	return ue.tmsi
 }
 

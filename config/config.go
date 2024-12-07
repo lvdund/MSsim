@@ -6,8 +6,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/nasType"
+	"github.com/reogac/nas"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -197,13 +196,10 @@ func setLogLevel(cfg Config) {
 
 }
 
-func (ue *UeConfig) GetUESecurityCapability() *nasType.UESecurityCapability {
-	UESecurityCapability := &nasType.UESecurityCapability{
-		Iei:    nasMessage.RegistrationRequestUESecurityCapabilityType,
-		Len:    2,
-		Buffer: []uint8{0x00, 0x00},
-	}
+func (ue *UeConfig) GetUESecurityCapability() *nas.UeSecurityCapability {
+	secCap := new(nas.UeSecurityCapability) //2 bytes
 
+	/* TODO:
 	// Ciphering algorithms
 	UESecurityCapability.SetEA0_5G(boolToUint8(ue.Ciphering.Nea0))
 	UESecurityCapability.SetEA1_128_5G(boolToUint8(ue.Ciphering.Nea1))
@@ -215,8 +211,8 @@ func (ue *UeConfig) GetUESecurityCapability() *nasType.UESecurityCapability {
 	UESecurityCapability.SetIA1_128_5G(boolToUint8(ue.Integrity.Nia1))
 	UESecurityCapability.SetIA2_128_5G(boolToUint8(ue.Integrity.Nia2))
 	UESecurityCapability.SetIA3_128_5G(boolToUint8(ue.Integrity.Nia3))
-
-	return UESecurityCapability
+	*/
+	return secCap
 }
 
 func boolToUint8(boolean bool) uint8 {
