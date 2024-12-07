@@ -23,7 +23,7 @@ import (
 
 	auth "mssim/internal/common"
 
-	"github.com/free5gc/openapi/models"
+	"github.com/reogac/sbi/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -215,7 +215,7 @@ func (ue *UEContext) NewRanUeContext(msin string,
 
 	// No KSI at first start
 	ue.UeSecurity.NgKsi.Ksi = 7
-	ue.UeSecurity.NgKsi.Tsc = models.ScType_NATIVE
+	ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_NATIVE
 
 	// added key, AuthenticationManagementField and opc or op.
 	ue.SetAuthSubscription(k, opc, op, amf, sqn)
@@ -236,7 +236,7 @@ func (ue *UEContext) NewRanUeContext(msin string,
 
 	// added network slice
 	ue.Snssai.Sd = sd
-	ue.Snssai.Sst = sst
+	ue.Snssai.Sst = int(sst)
 
 	// added Domain Network Name.
 	ue.Dnn = dnn
@@ -650,10 +650,10 @@ func (ue *UEContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte
 }
 
 func (ue *UEContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
+
 	RAND []byte,
 	snNmae string,
 	AUTN []byte) ([]byte, string) {
-
 	// parameters for authentication challenge.
 	mac_a, mac_s := make([]byte, 8), make([]byte, 8)
 	CK, IK := make([]byte, 16), make([]byte, 16)
@@ -661,17 +661,17 @@ func (ue *UEContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscr
 	AK, AKstar := make([]byte, 6), make([]byte, 6)
 
 	// Get OPC, K, SQN, AMF from USIM.
-	OPC, err := hex.DecodeString(authSubs.Opc.OpcValue)
+	OPC, err := hex.DecodeString(authSubs.EncOpcKey)
 	if err != nil {
-		log.Fatal("[UE] OPC error: ", err, authSubs.Opc.OpcValue)
+		log.Fatal("[UE] OPC error: ", err, authSubs.EncOpcKey)
 	}
-	K, err := hex.DecodeString(authSubs.PermanentKey.PermanentKeyValue)
+	K, err := hex.DecodeString(authSubs.EncPermanentKey)
 	if err != nil {
-		log.Fatal("[UE] K error: ", err, authSubs.PermanentKey.PermanentKeyValue)
+		log.Fatal("[UE] K error: ", err, authSubs.EncPermanentKey)
 	}
-	sqnUe, err := hex.DecodeString(authSubs.SequenceNumber)
+	sqnUe, err := hex.DecodeString(authSubs.SequenceNumber.Sqn)
 	if err != nil {
-		log.Fatal("[UE] sqn error: ", err, authSubs.SequenceNumber)
+		log.Fatal("[UE] sqn error: ", err, authSubs.SequenceNumber.Sqn)
 	}
 	AMF, err := hex.DecodeString(authSubs.AuthenticationManagementField)
 	if err != nil {
@@ -715,7 +715,7 @@ func (ue *UEContext) DeriveRESstarAndSetKey(authSubs models.AuthenticationSubscr
 	}
 
 	// updated sqn value.
-	authSubs.SequenceNumber = fmt.Sprintf("%x", sqnHn)
+	authSubs.SequenceNumber.Sqn = fmt.Sprintf("%x", sqnHn)
 
 	// derive RES*
 	key := append(CK, IK...)
@@ -778,21 +778,15 @@ func (ue *UEContext) DerivateAlgKey() {
 }
 
 func (ue *UEContext) SetAuthSubscription(k, opc, op, amf, sqn string) {
-	ue.UeSecurity.AuthenticationSubs.PermanentKey = &models.PermanentKey{
-		PermanentKeyValue: k,
-	}
-	ue.UeSecurity.AuthenticationSubs.Opc = &models.Opc{
-		OpcValue: opc,
-	}
-	ue.UeSecurity.AuthenticationSubs.Milenage = &models.Milenage{
-		Op: &models.Op{
-			OpValue: op,
-		},
-	}
+	ue.UeSecurity.AuthenticationSubs.EncPermanentKey = k
+	ue.UeSecurity.AuthenticationSubs.EncOpcKey = opc
+	ue.UeSecurity.AuthenticationSubs.EncTopcKey = op
 	ue.UeSecurity.AuthenticationSubs.AuthenticationManagementField = amf
 
-	ue.UeSecurity.AuthenticationSubs.SequenceNumber = sqn
-	ue.UeSecurity.AuthenticationSubs.AuthenticationMethod = models.AuthMethod__5_G_AKA
+	ue.UeSecurity.AuthenticationSubs.SequenceNumber = &models.SequenceNumber{
+		Sqn: sqn,
+	}
+	ue.UeSecurity.AuthenticationSubs.AuthenticationMethod = models.AUTHMETHOD_5G_AKA
 }
 
 func (ue *UEContext) Terminate() {
