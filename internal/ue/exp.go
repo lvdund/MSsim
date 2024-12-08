@@ -21,11 +21,11 @@ func LogExpResults(logFile *os.File, ue *UeContext) {
 	if ue == nil || len(ue.PduSession) == 0 {
 		return
 	} else if logFile == nil {
-		logrus.Errorln("logFile is nil -", ue.UeSecurity.Supi)
+		logrus.Errorln("logFile is nil -", ue.supi)
 	}
 	for _, pdu := range ue.PduSession {
 		if pdu != nil {
-			fmt.Fprintf(logFile, "%s-%d: %d\n", ue.UeSecurity.Supi, pdu.Id, pdu.Exp.Duration())
+			fmt.Fprintf(logFile, "%s-%d: %d\n", ue.supi, pdu.Id, pdu.Exp.Duration())
 		}
 	}
 }

@@ -1,7 +1,6 @@
 package context
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -9,18 +8,9 @@ import (
 	"github.com/reogac/nas"
 	"mssim/config"
 	gnbContext "mssim/internal/gnb/context"
-	"net"
-	"reflect"
-	"regexp"
+	"mssim/internal/sec"
 	"sync"
 	"time"
-
-	"github.com/free5gc/nas/security"
-
-	"github.com/free5gc/util/milenage"
-	"github.com/free5gc/util/ueauth"
-
-	auth "mssim/internal/common"
 
 	"github.com/reogac/sbi/models"
 	log "github.com/sirupsen/logrus"
@@ -45,19 +35,35 @@ type ScenarioMessage struct {
 	StateChange int
 }
 
+type AuthContext struct {
+	kamf     []byte
+	rand     []byte
+	ngKsi    nas.KeySetIdentifier
+	sqn      string
+	amf      string
+	milenage *sec.Milenage
+}
+
 type UeContext struct {
-	id                uint8
-	UeSecurity        SECURITY
+	id uint8
+
 	StateMM           int
 	gnbInboundChannel chan gnbContext.UEMessage
 	gnbRx             chan gnbContext.UEMessage
 	gnbTx             chan gnbContext.UEMessage
 	drx               *time.Ticker
 	PduSession        [16]*UEPDUSession
-	amfInfo           Amf
 
-	secCtx *nas.SecurityContext
+	secCap *nas.UeSecurityCapability
+	supi   string
+	msin   string
+	snn    string
+	suci   nas.MobileIdentity
+	guti   *nas.Guti
 	nasPdu []byte //registration request
+
+	auth   AuthContext          //on-going authentication context
+	secCtx *nas.SecurityContext //current security context
 
 	// TODO: Modify config so you can configure these parameters per PDUSession
 	Dnn        string
@@ -71,86 +77,25 @@ type UeContext struct {
 	lock    sync.Mutex
 }
 
-type Amf struct {
-	mcc string
-	mnc string
-}
-
-type UEPDUSession struct {
-	Id            uint8
-	GnbPduSession *gnbContext.GnbPDUSession
-	ueIP          string
-	ueGnbIP       net.IP
-	tun           netlink.Link
-	rule          *netlink.Rule
-	routeTun      *netlink.Route
-	vrf           *netlink.Vrf
-	stopSignal    chan bool
-	Wait          chan bool
-	T3580Retries  int
-
-	Exp Experiment
-
-	// TS 24.501 - 6.1.3.2.1.1 State Machine for Session Management
-	StateSM int
-}
-
-type SECURITY struct {
-	Supi                 string
-	Msin                 string
-	mcc                  string
-	mnc                  string
-	ULCount              security.Count
-	DLCount              security.Count
-	UeSecurityCapability *nas.UeSecurityCapability
-	IntegrityAlg         uint8
-	CipheringAlg         uint8
-	NgKsi                models.NgKsi
-	Snn                  string
-	KnasEnc              [16]uint8
-	KnasInt              [16]uint8
-	Kamf                 []uint8
-	AuthenticationSubs   models.AuthenticationSubscription
-	Suci                 nas.MobileIdentity
-	RoutingIndicator     string
-	Guti                 *nas.Guti
-}
-
 func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnbInboundChannel chan gnbContext.UEMessage, wg *sync.WaitGroup, logFile string) chan ScenarioMessage {
 	scenarioChan := make(chan ScenarioMessage)
 	ue := &UeContext{
-		id: uint8(id),
+		id:     uint8(id),
+		msin:   conf.Ue.Msin,
+		secCap: conf.Ue.GetUESecurityCapability(),
 	}
-	// added SUPI.
-	ue.UeSecurity.Msin = conf.Ue.Msin
-
-	// added ciphering algorithm.
-	ue.UeSecurity.UeSecurityCapability = conf.Ue.GetUESecurityCapability()
-
-	integAlg, cipherAlg := auth.SelectAlgorithms(ue.UeSecurity.UeSecurityCapability)
-
-	// set the algorithms of integritys
-	ue.UeSecurity.IntegrityAlg = integAlg
-	// set the algorithms of ciphering
-	ue.UeSecurity.CipheringAlg = cipherAlg
-
-	// No KSI at first start
-	ue.UeSecurity.NgKsi.Ksi = 7
-	ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_NATIVE
-
-	// added key, AuthenticationManagementField and opc or op.
-	op := "c9e8763286b5b9ffbdf56e1297d0887b"
-	ue.SetAuthSubscription(conf.Ue.Key, conf.Ue.Opc, op, conf.Ue.Amf, conf.Ue.Sqn)
-
-	// added mcc and mnc
-	ue.UeSecurity.mcc = conf.Ue.Hplmn.Mcc
-	ue.UeSecurity.mnc = conf.Ue.Hplmn.Mnc
-
-	// added routing indidcator
-	ue.UeSecurity.RoutingIndicator = conf.Ue.RoutingIndicator
+	//integAlg, cipherAlg := auth.SelectAlgorithms(ue.UeSecurity.UeSecurityCapability)
+	op, _ := hex.DecodeString("0xc9e8763286b5b9ffbdf56e1297d0887b")
+	key, _ := hex.DecodeString(conf.Ue.Key)
+	ue.auth.milenage, _ = sec.NewMilenage(key, op, false)
+	ue.auth.amf = conf.Ue.Amf
+	ue.auth.sqn = conf.Ue.Sqn
 
 	// added supi
-	ue.UeSecurity.Supi = fmt.Sprintf("imsi-%s%s%s", conf.Ue.Hplmn.Mcc, conf.Ue.Hplmn.Mnc, conf.Ue.Msin)
+	mcc := conf.Ue.Hplmn.Mcc
+	mnc := conf.Ue.Hplmn.Mnc
+
+	ue.supi = fmt.Sprintf("imsi-%s%s%s", mcc, mnc, conf.Ue.Msin)
 
 	// added network slice
 	ue.Snssai.Sd = conf.Ue.Snssai.Sd
@@ -160,7 +105,7 @@ func CreateUe(conf config.Config, id int, ueMgrChannel chan UeTesterMessage, gnb
 	ue.Dnn = conf.Ue.Dnn
 	ue.TunnelMode = conf.Ue.TunnelMode
 
-	ue.UeSecurity.Suci = ue.encodeSuci()
+	ue.createSuci(mcc, mnc)
 
 	ue.gnbInboundChannel = gnbInboundChannel
 	ue.scenarioChan = scenarioChan
@@ -207,14 +152,15 @@ func (ue *UeContext) GetUeId() uint8 {
 	return ue.id
 }
 
-func (ue *UeContext) GetMsin() string {
-	return ue.UeSecurity.Msin
-}
+/*
+	func (ue *UeContext) GetMsin() string {
+		return ue.UeSecurity.Msin
+	}
 
-func (ue *UeContext) GetSupi() string {
-	return ue.UeSecurity.Supi
-}
-
+	func (ue *UeContext) GetSupi() string {
+		return ue.UeSecurity.Supi
+	}
+*/
 func (ue *UeContext) SetStateMM_DEREGISTERED_INITIATED() {
 	ue.StateMM = MM5G_DEREGISTERED_INIT
 	ue.scenarioChan <- ScenarioMessage{StateChange: ue.StateMM}
@@ -319,93 +265,7 @@ func (ue *UeContext) DeletePduSession(pduSessionid uint8) error {
 	return nil
 }
 
-func (pduSession *UEPDUSession) SetIp(ip []uint8) {
-	pduSession.ueIP = fmt.Sprintf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3])
-}
-
-func (pduSession *UEPDUSession) GetIp() string {
-	return pduSession.ueIP
-}
-
-func (pduSession *UEPDUSession) SetGnbIp(ip net.IP) {
-	pduSession.ueGnbIP = ip
-}
-
-func (pduSession *UEPDUSession) GetGnbIp() net.IP {
-	return pduSession.ueGnbIP
-}
-
-func (pduSession *UEPDUSession) SetStopSignal(stopSignal chan bool) {
-	pduSession.stopSignal = stopSignal
-}
-
-func (pduSession *UEPDUSession) GetStopSignal() chan bool {
-	return pduSession.stopSignal
-}
-
-func (pduSession *UEPDUSession) GetPduSesssionId() uint8 {
-	return pduSession.Id
-}
-
-func (pduSession *UEPDUSession) SetTunInterface(tun netlink.Link) {
-	pduSession.tun = tun
-}
-
-func (pduSession *UEPDUSession) GetTunInterface() netlink.Link {
-	return pduSession.tun
-}
-
-func (pduSession *UEPDUSession) SetTunRule(rule *netlink.Rule) {
-	pduSession.rule = rule
-}
-
-func (pduSession *UEPDUSession) GetTunRule() *netlink.Rule {
-	return pduSession.rule
-}
-
-func (pduSession *UEPDUSession) SetTunRoute(route *netlink.Route) {
-	pduSession.routeTun = route
-}
-
-func (pduSession *UEPDUSession) GetTunRoute() *netlink.Route {
-	return pduSession.routeTun
-}
-
-func (pduSession *UEPDUSession) SetVrfDevice(vrf *netlink.Vrf) {
-	pduSession.vrf = vrf
-}
-
-func (pduSession *UEPDUSession) GetVrfDevice() *netlink.Vrf {
-	return pduSession.vrf
-}
-
-func (pdu *UEPDUSession) SetStateSM_PDU_SESSION_INACTIVE() {
-	pdu.StateSM = SM5G_PDU_SESSION_INACTIVE
-}
-
-func (pdu *UEPDUSession) SetStateSM_PDU_SESSION_ACTIVE() {
-	pdu.StateSM = SM5G_PDU_SESSION_ACTIVE
-}
-
-func (pdu *UEPDUSession) SetStateSM_PDU_SESSION_PENDING() {
-	pdu.StateSM = SM5G_PDU_SESSION_ACTIVE_PENDING
-}
-
-func (pduSession *UEPDUSession) GetStateSM() int {
-	return pduSession.StateSM
-}
-
-func (ue *UeContext) deriveSNN() string {
-	// 5G:mnc093.mcc208.3gppnetwork.org
-	var resu string
-	if len(ue.amfInfo.mnc) == 2 {
-		resu = "5G:mnc0" + ue.amfInfo.mnc + ".mcc" + ue.amfInfo.mcc + ".3gppnetwork.org"
-	} else {
-		resu = "5G:mnc" + ue.amfInfo.mnc + ".mcc" + ue.amfInfo.mcc + ".3gppnetwork.org"
-	}
-	return resu
-}
-
+/*
 func (ue *UeContext) GetUeSecurityCapability() *nas.UeSecurityCapability {
 	return ue.UeSecurity.UeSecurityCapability
 }
@@ -426,7 +286,7 @@ func (ue *UeContext) GetMccAndMncInOctets() []byte {
 	resu, _ := hex.DecodeString(res)
 	return resu
 }
-
+*/
 // TS 24.501 9.11.3.4.1
 // Routing Indicator shall consist of 1 to 4 digits. The coding of this field is the
 // responsibility of home network operator but BCD coding shall be used. If a network
@@ -434,6 +294,7 @@ func (ue *UeContext) GetMccAndMncInOctets() []byte {
 // shall be coded as "1111" to fill the 4 digits coding of Routing Indicator (see NOTE 2). If
 // no Routing Indicator is configured in the USIM, the UE shall coxde bits 1 to 4 of octet 8
 // of the Routing Indicator as "0000" and the remaining digits as "1111".
+/*
 func (ue *UeContext) GetRoutingIndicatorInOctets() []byte {
 	if len(ue.UeSecurity.RoutingIndicator) == 0 {
 		ue.UeSecurity.RoutingIndicator = "0"
@@ -463,60 +324,54 @@ func (ue *UeContext) GetRoutingIndicatorInOctets() []byte {
 
 	return encodedRoutingIndicator
 }
-
 func (ue *UeContext) getPlmnId() string {
 	var plmnId nas.PlmnId
 	plmnId.Set(ue.UeSecurity.mcc, ue.UeSecurity.mnc)
 	return plmnId.String()
 }
+*/
+func (ue *UeContext) createSuci(mcc, mnc string) {
+	var plmnId nas.PlmnId
+	plmnId.Set(mcc, mnc)
 
-func (ue *UeContext) encodeSuci() nas.MobileIdentity {
-	msin := ue.GetMsin()
 	suci := new(nas.SupiImsi)
-	suci.Parse([]string{ue.getPlmnId(), msin})
-	return nas.MobileIdentity{
+	suci.Parse([]string{plmnId.String(), ue.msin})
+	ue.suci = nas.MobileIdentity{
 		Id: &nas.Suci{
 			Content: suci,
 		},
 	}
 }
 
-func (ue *UeContext) GetAmfRegionId() uint8 {
-	return ue.UeSecurity.Guti.AmfId.GetRegion()
-}
+/*
+	func (ue *UeContext) getAmfRegionId() uint8 {
+		return ue.guti.AmfId.GetRegion()
+	}
 
-func (ue *UeContext) GetAmfPointer() uint8 {
-	return ue.UeSecurity.Guti.AmfId.GetPointer()
-}
+	func (ue *UeContext) getAmfPointer() uint8 {
+		return ue.guti.AmfId.GetPointer()
+	}
 
-func (ue *UeContext) GetAmfSetId() uint16 {
-	return ue.UeSecurity.Guti.AmfId.GetSet()
-}
-
-func (ue *UeContext) SetAmfMccAndMnc(mcc string, mnc string) {
-	ue.amfInfo.mcc = mcc
-	ue.amfInfo.mnc = mnc
-	ue.UeSecurity.Snn = ue.deriveSNN()
-}
-
-func (ue *UeContext) GetTMSI5G() (tmsi [4]uint8) {
-	if id := ue.UeSecurity.Guti; id != nil {
+	func (ue *UeContext) getAmfSetId() uint16 {
+		return ue.guti.AmfId.GetSet()
+	}
+*/
+func (ue *UeContext) getTMSI5G() (tmsi [4]uint8) {
+	if id := ue.guti; id != nil {
 		binary.BigEndian.PutUint32(tmsi[:], id.Tmsi)
 	}
 	return
 }
-func (ue *UeContext) Set5gGuti(guti *nas.MobileIdentity) {
+
+func (ue *UeContext) set5gGuti(guti *nas.MobileIdentity) {
 	if guti.GetType() != nas.MobileIdentity5GSType5gGuti {
 		//TODO: warn
 		return
 	}
-	ue.UeSecurity.Guti = guti.Id.(*nas.Guti)
+	ue.guti = guti.Id.(*nas.Guti)
 }
 
-func (ue *UeContext) Get5gGuti() *nas.Guti {
-	return ue.UeSecurity.Guti
-}
-
+/*
 func (ue *UeContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte) {
 
 	sqn := make([]byte, 6)
@@ -534,7 +389,8 @@ func (ue *UeContext) deriveAUTN(autn []byte, ak []uint8) ([]byte, []byte, []byte
 	// return SQN, amf, mac_a
 	return sqn, amf, mac_a
 }
-
+*/
+/*
 func (ue *UeContext) deriveRESstarAndSetKey(authSubs models.AuthenticationSubscription,
 
 	RAND []byte,
@@ -662,18 +518,7 @@ func (ue *UeContext) DerivateAlgKey() {
 		log.Errorf("[UE] Algorithm key derivation failed  %v", err)
 	}
 }
-
-func (ue *UeContext) SetAuthSubscription(k, opc, op, amf, sqn string) {
-	ue.UeSecurity.AuthenticationSubs.EncPermanentKey = k
-	ue.UeSecurity.AuthenticationSubs.EncOpcKey = opc
-	ue.UeSecurity.AuthenticationSubs.EncTopcKey = op
-	ue.UeSecurity.AuthenticationSubs.AuthenticationManagementField = amf
-
-	ue.UeSecurity.AuthenticationSubs.SequenceNumber = &models.SequenceNumber{
-		Sqn: sqn,
-	}
-	ue.UeSecurity.AuthenticationSubs.AuthenticationMethod = models.AUTHMETHOD_5G_AKA
-}
+*/
 
 func (ue *UeContext) Terminate() {
 	ue.SetStateMM_NULL()

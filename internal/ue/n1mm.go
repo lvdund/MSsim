@@ -2,9 +2,9 @@ package context
 
 import (
 	"github.com/reogac/nas"
-	"github.com/reogac/sbi/models"
 	log "github.com/sirupsen/logrus"
 	gnbContext "mssim/internal/gnb/context"
+	//"mssim/internal/sec"
 )
 
 func (ue *UeContext) sendGnb(message gnbContext.UEMessage) {
@@ -61,11 +61,6 @@ func (ue *UeContext) handleNas(nasPdu []byte) {
 	case nas.SecurityModeCommandMsgType:
 		// handle security mode command.
 		log.Info("[UE][NAS] Receive Security Mode Command")
-		/*
-			if !newSecurityContext {
-				log.Warn("Received Security Mode Command with security header different from \"Integrity protected with new 5G NAS security context\" ")
-			}
-		*/
 		ue.handleSecurityModeCommand(gmm.SecurityModeCommand)
 
 	case nas.RegistrationAcceptMsgType:
@@ -152,15 +147,21 @@ func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 	autn := []byte(*message.AuthenticationParameterAutn)
 
 	// getting resStar
-	paramAutn, check := ue.deriveRESstarAndSetKey(ue.UeSecurity.AuthenticationSubs, rand[:], ue.UeSecurity.Snn, autn[:])
+	_ = rand
+	_ = autn
+	paramAutn := []byte{}
+	check := "MAC failure"
+	//paramAutn, check := ue.deriveRESstarAndSetKey(ue.UeSecurity.AuthenticationSubs, rand[:], ue.UeSecurity.Snn, autn[:])
 	switch check {
 
 	case "MAC failure":
 		log.Info("[UE][NAS][MAC] Authenticity of the authentication request message: FAILED")
 		log.Info("[UE][NAS] Send authentication failure with MAC failure")
-		response = &nas.AuthenticationFailure{
+		msg := &nas.AuthenticationFailure{
 			GmmCause: nas.Uint8(nas.Cause5GMMMACFailure),
 		}
+		msg.SetSecurityHeader(nas.NasSecNone)
+		response = msg
 		// not change the state of UE.
 	case "SQN failure":
 		log.Info("[UE][NAS][MAC] Authenticity of the authentication request message: OK")
@@ -171,6 +172,7 @@ func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 			AuthenticationFailureParameter: new(nas.Bytes),
 		}
 		*msg.AuthenticationFailureParameter = paramAutn
+		msg.SetSecurityHeader(nas.NasSecNone)
 		response = msg
 		// not change the state of UE.
 
@@ -184,6 +186,7 @@ func (ue *UeContext) handleAuthenticationRequest(message *nas.AuthenticationRequ
 			AuthenticationResponseParameter: new(nas.Bytes),
 		}
 		*msg.AuthenticationResponseParameter = paramAutn
+		msg.SetSecurityHeader(nas.NasSecNone)
 		response = msg
 		// change state of UE for registered-initiated
 		ue.SetStateMM_REGISTERED_INITIATED()
@@ -197,23 +200,26 @@ func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 	if message.Ngksi.Id == 7 {
 		log.Fatal("[UE][NAS] Error in Security Mode Command, ngKSI not the expected value")
 	}
-
-	switch ue.UeSecurity.CipheringAlg {
-	case 0:
+	algs := message.SelectedNasSecurityAlgorithms
+	switch algs.EncAlg() {
+	case nas.AlgCiphering128NEA0:
 		log.Info("[UE][NAS] Type of ciphering algorithm is 5G-EA0")
-	case 1:
+	case nas.AlgCiphering128NEA1:
 		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-EA1")
-	case 2:
+	case nas.AlgCiphering128NEA2:
 		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-EA2")
+	case nas.AlgCiphering128NEA3:
+		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-EA3")
 	}
-
-	switch ue.UeSecurity.IntegrityAlg {
-	case 0:
-		log.Info("[UE][NAS] Type of integrity protection algorithm is 5G-IA0")
-	case 1:
-		log.Info("[UE][NAS] Type of integrity protection algorithm is 128-5G-IA1")
-	case 2:
-		log.Info("[UE][NAS] Type of integrity protection algorithm is 128-5G-IA2")
+	switch algs.IntAlg() {
+	case nas.AlgIntegrity128NIA0:
+		log.Info("[UE][NAS] Type of ciphering algorithm is 5G-IA0")
+	case nas.AlgIntegrity128NIA1:
+		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-IA1")
+	case nas.AlgIntegrity128NIA2:
+		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-IA2")
+	case nas.AlgIntegrity128NIA3:
+		log.Info("[UE][NAS] Type of ciphering algorithm is 128-5G-IA3")
 	}
 
 	rinmr := false
@@ -222,16 +228,13 @@ func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 		rinmr = message.AdditionalSecurityInformation.GetRetransmission()
 	}
 
-	ue.UeSecurity.NgKsi.Ksi = int(message.Ngksi.Id)
+	ue.auth.ngKsi = message.Ngksi
 
-	// NgKsi: TS 24.501 9.11.3.32
-	switch message.Ngksi.Tsc {
-	case nas.TscNative:
-		ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_NATIVE
-	case nas.TscMapped:
-		ue.UeSecurity.NgKsi.Tsc = models.SCTYPE_MAPPED
-	}
-	//TODO: activate security context
+	ue.secCtx = nas.NewSecurityContext(&ue.auth.ngKsi, ue.auth.kamf, false, nas.Bearer3GPP)
+	ue.secCtx.SetAlgorithms(algs.EncAlg(), algs.IntAlg())
+
+	//derive NasContext keys (then the security context is activated)
+	ue.secCtx.DeriveAlgKeys(nas.HDP_NONE) //TODO: read HDP from message
 
 	imeisv := new(nas.Imei)
 	imeisv.Parse("1111111111111111") //dummy imei
@@ -249,6 +252,7 @@ func (ue *UeContext) handleSecurityModeCommand(message *nas.SecurityModeCommand)
 	}
 
 	nasCtx := ue.getNasContext()
+	response.SetSecurityHeader(nas.NasSecBothNew)
 	responsePdu, _ := nas.EncodeMm(nasCtx, response)
 	// sending to GNB
 	ue.sendNas(responsePdu)
@@ -261,7 +265,7 @@ func (ue *UeContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
 
 	// saved 5g GUTI and others information.
 	if message.Guti != nil {
-		ue.Set5gGuti(message.Guti)
+		ue.set5gGuti(message.Guti)
 	} else {
 		log.Warn("[UE][NAS] UE was not assigned a 5G-GUTI by AMF")
 	}
@@ -279,12 +283,13 @@ func (ue *UeContext) handleRegistrationAccept(message *nas.RegistrationAccept) {
 		log.Warn("[UE][NAS] ALLOWED NSSAI: SST: ", ue.Snssai.Sst, " SD: ", ue.Snssai.Sd)
 	}
 
-	log.Info("[UE][NAS] UE 5G GUTI: ", ue.Get5gGuti())
+	log.Info("[UE][NAS] UE 5G GUTI: ", ue.guti.String())
 
 	// getting NAS registration complete.
 	response := &nas.RegistrationComplete{}
 	//TODO: set SORTransparentContainer if needed
 
+	response.SetSecurityHeader(nas.NasSecBoth)
 	nasCtx := ue.getNasContext() //must be non-nil
 	responsePdu, _ := nas.EncodeMm(nasCtx, response)
 	// sending to GNB

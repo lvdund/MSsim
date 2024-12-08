@@ -28,7 +28,7 @@ func (ue *UeContext) setupGtpInterface(msg gnbContext.UEMessage) {
 	pduSession.GnbPduSession = gnbPduSession
 
 	if ue.TunnelMode == config.TunnelDisabled {
-		log.Info(fmt.Sprintf("[UE][GTP] Interface for UE %s has not been created. Tunnel has been disabled.", ue.GetMsin()))
+		log.Info(fmt.Sprintf("[UE][GTP] Interface for UE %s has not been created. Tunnel has been disabled.", ue.msin))
 		return
 	}
 
@@ -43,9 +43,8 @@ func (ue *UeContext) setupGtpInterface(msg gnbContext.UEMessage) {
 	// ueGnbIp := pduSession.GetGnbIp()
 	upfIp := pduSession.GnbPduSession.GetUpfIp()
 	ueIp := pduSession.GetIp()
-	msin := ue.GetMsin()
-	nameInf := fmt.Sprintf("val%s", msin)
-	vrfInf := fmt.Sprintf("vrf%s", msin)
+	nameInf := fmt.Sprintf("val%s", ue.msin)
+	vrfInf := fmt.Sprintf("vrf%s", ue.msin)
 	stopSignal := make(chan bool)
 
 	// _ = gtpLink.CmdDel(nameInf)

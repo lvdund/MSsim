@@ -10,7 +10,7 @@ import (
 
 func (ue *UeContext) runService(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage) {
 	// starting communication with GNB and listen.
-	ue.InitConn(ue.GetGnbInboundChannel())
+	ue.initConn(ue.GetGnbInboundChannel())
 	sigStop := make(chan os.Signal, 1)
 	signal.Notify(sigStop, os.Interrupt)
 
@@ -20,14 +20,14 @@ func (ue *UeContext) runService(wg *sync.WaitGroup, ueMgrCh chan UeTesterMessage
 		select {
 		case msg, open := <-ue.gnbTx:
 			if !open {
-				log.Warn("[UE][", ue.GetMsin(), "] Stopping UE as communication with gNB was closed")
+				log.Warn("[UE][", ue.msin, "] Stopping UE as communication with gNB was closed")
 				ue.gnbTx = nil
 				break
 			}
 			ue.handleGnbMsg(msg)
 		case msg, open := <-ueMgrCh:
 			if !open {
-				log.Warn("[UE][", ue.GetMsin(), "] Stopping UE as communication with scenario was closed")
+				log.Warn("[UE][", ue.msin, "] Stopping UE as communication with scenario was closed")
 				loop = false
 				break
 			}
@@ -47,7 +47,7 @@ func (ue *UeContext) verifyPaging() {
 	ue.GetGnbInboundChannel() <- gnbContext.UEMessage{GNBTx: gnbTx, FetchPagedUEs: true}
 	msg := <-gnbTx
 	for _, pagedUE := range msg.PagedUEs {
-		if ue.Get5gGuti() != nil && pagedUE.FiveGSTMSI != nil && [4]uint8(pagedUE.FiveGSTMSI.FiveGTMSI.Value) == ue.GetTMSI5G() {
+		if ue.guti != nil && pagedUE.FiveGSTMSI != nil && [4]uint8(pagedUE.FiveGSTMSI.FiveGTMSI.Value) == ue.getTMSI5G() {
 			ue.handleExternalTrigger(UeTesterMessage{Type: ServiceRequestTrigger})
 			return
 		}

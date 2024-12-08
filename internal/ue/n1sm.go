@@ -84,7 +84,7 @@ func (ue *UeContext) handlePduSessionReleaseCommand(msg *nas.PduSessionReleaseCo
 	pduSessionId := msg.GetSessionId()
 	pduSession, err := ue.GetPduSession(pduSessionId)
 	if pduSession == nil || err != nil {
-		log.Error("[UE][NAS] Unable to delete PDU Session ", pduSessionId, " from UE ", ue.GetMsin(), " as the PDU Session was not found. Ignoring.")
+		log.Error("[UE][NAS] Unable to delete PDU Session ", pduSessionId, " from UE ", ue.msin, " as the PDU Session was not found. Ignoring.")
 		return
 	}
 	ue.DeletePduSession(pduSessionId)

@@ -53,8 +53,8 @@ func (ue *UeContext) handleExternalTrigger(msg UeTesterMessage) bool {
 			ue.StopDRX()
 
 			// Since gNodeB stopped communication after switching to Idle, we need to connect back to gNodeB
-			ue.InitConn(ue.GetGnbInboundChannel())
-			if ue.Get5gGuti() != nil {
+			ue.initConn(ue.GetGnbInboundChannel())
+			if ue.guti != nil {
 				ue.triggerInitServiceRequest()
 			} else {
 				// If AMF did not assign us a GUTI, we have to fallback to the usual Registration/Authentification process
@@ -199,18 +199,22 @@ func (ue *UeContext) triggerInitRegistration() {
 	log.Info("[UE] Initiating Registration")
 
 	msg := &nas.RegistrationRequest{
-		UeSecurityCapability: ue.UeSecurity.UeSecurityCapability,
+		UeSecurityCapability: ue.secCap,
 	}
 	msg.RegistrationType.Value = nas.RegistrationType5GSInitialRegistration
 
-	if guti := ue.UeSecurity.Guti; guti != nil {
+	if ue.guti != nil {
 		msg.MobileIdentity = nas.MobileIdentity{
-			Id: guti,
+			Id: ue.guti,
 		}
 	} else {
-		msg.MobileIdentity = ue.UeSecurity.Suci
+		msg.MobileIdentity = ue.suci
 	}
-	msg.Ngksi.Id = uint8(ue.UeSecurity.NgKsi.Ksi)
+	if ue.secCtx != nil {
+		msg.Ngksi.Id = ue.secCtx.NgKsi().Id
+	} else {
+		msg.Ngksi.Id = 7
+	}
 	var gmmCap [13]byte
 	gmmCap[0] = 0x07
 	msg.GmmCapability = new(nas.GmmCapability)
@@ -232,6 +236,8 @@ func (ue *UeContext) triggerInitRegistration() {
 		msg.PduSessionStatus = new(nas.PduSessionStatus)
 		msg.PduSessionStatus.Set(pduFlag)
 	}
+	msg.SetSecurityHeader(nas.NasSecNone)
+
 	//TODO: RequestedNssai
 	//
 	nasPdu, _ := nas.EncodeMm(nil, msg)
@@ -263,15 +269,15 @@ func (ue *UeContext) triggerInitDeregistration() {
 	log.Info("[UE] Initiating Deregistration")
 
 	msg := &nas.DeregistrationRequestFromUe{
-		Ngksi: *ue.UeSecurity.NgKsi.NasType(),
+		Ngksi: *ue.secCtx.NgKsi(),
 	}
 	msg.DeRegistrationType.SetSwitchOff(true)
 	msg.DeRegistrationType.SetReregistration(false)
 	msg.DeRegistrationType.SetAccessType(nas.AccessType3GPP)
-	if ue.UeSecurity.Guti != nil {
-		msg.MobileIdentity.Id = ue.UeSecurity.Guti
+	if ue.guti != nil {
+		msg.MobileIdentity.Id = ue.guti
 	} else {
-		msg.MobileIdentity = ue.UeSecurity.Suci
+		msg.MobileIdentity = ue.suci
 	}
 
 	nasCtx := ue.getNasContext() //must be non nil
@@ -290,7 +296,7 @@ func (ue *UeContext) triggerInitIdentifyResponse() {
 	log.Info("[UE] Initiating Identify Response")
 
 	msg := &nas.IdentityResponse{
-		MobileIdentity: ue.UeSecurity.Suci, //TODO: can be SUCI/IMEISV etc
+		MobileIdentity: ue.suci, //TODO: can be SUCI/IMEISV etc
 	}
 	nasCtx := ue.getNasContext()
 	if nasCtx != nil {
@@ -348,12 +354,12 @@ func (ue *UeContext) triggerSwitchToIdle() {
 	ue.sendGnb(gnbContext.UEMessage{Idle: true})
 }
 
-func (ue *UeContext) InitConn(gnbInboundChannel chan gnbContext.UEMessage) {
+func (ue *UeContext) initConn(gnbInboundChannel chan gnbContext.UEMessage) {
 	ue.gnbRx = make(chan gnbContext.UEMessage, 1)
 	ue.gnbTx = make(chan gnbContext.UEMessage, 1)
 
 	// Send channels to gNB
-	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.gnbTx, GNBRx: ue.gnbRx, PrUeId: int64(ue.id), Tmsi: ue.Get5gGuti()}
+	gnbInboundChannel <- gnbContext.UEMessage{GNBTx: ue.gnbTx, GNBRx: ue.gnbRx, PrUeId: int64(ue.id), Tmsi: ue.guti}
 	msg := <-ue.gnbTx
-	ue.SetAmfMccAndMnc(msg.Mcc, msg.Mnc)
+	ue.snn = deriveSNN(msg.Mcc, msg.Mnc)
 }
